@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface RedeemGiftCardProps {
-  onSuccess?: () =>;
+  onSuccess?: () =>granted;
 }
 
 export default function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
