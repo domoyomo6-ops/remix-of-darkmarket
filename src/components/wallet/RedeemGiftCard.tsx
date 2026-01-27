@@ -66,18 +66,8 @@ export default function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
   };
 
   const formatCode = (value: string) => {
-    // Auto-format as H5-XXXX-XXXX-XXXX
-    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    let formatted = '';
-    
-    if (cleaned.length > 0) {
-      formatted = cleaned.slice(0, 2);
-      if (cleaned.length > 2) formatted += '-' + cleaned.slice(2, 6);
-      if (cleaned.length > 6) formatted += '-' + cleaned.slice(6, 10);
-      if (cleaned.length > 10) formatted += '-' + cleaned.slice(10, 14);
-    }
-    
-    return formatted;
+    // Just uppercase the input, don't reformat - codes can be various formats
+    return value.toUpperCase();
   };
 
   if (!user) return null;
@@ -112,9 +102,9 @@ export default function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
                 <Input
                   value={code}
                   onChange={(e) => setCode(formatCode(e.target.value))}
-                  placeholder="H5-XXXX-XXXX-XXXX"
+                  placeholder="HELL5TAR-XXXXXXXX"
                   className="crt-input font-mono text-center text-lg tracking-wider"
-                  maxLength={19}
+                  maxLength={25}
                   disabled={loading}
                 />
               </div>
