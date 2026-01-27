@@ -286,7 +286,7 @@ export default function MusicPlayer() {
     if (audioRef.current) {
       audioRef.current.src = track.url;
       audioRef.current.play().catch(() => {
-        toast.error('Playback blocked until you interact with the page.');
+        // Silently handle autoplay block - browser requires user interaction first
       });
     }
   };
