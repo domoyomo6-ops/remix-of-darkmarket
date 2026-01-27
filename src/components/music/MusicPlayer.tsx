@@ -49,6 +49,8 @@ export default function MusicPlayer() {
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRequest, setShowRequest] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [pendingTrack, setPendingTrack] = useState<{ track: Track; index: number } | null>(null);
   const [requestForm, setRequestForm] = useState({
     title: '',
     url: '',
@@ -56,6 +58,32 @@ export default function MusicPlayer() {
   });
   const ownsCurrentPlaylist = !!currentPlaylist && currentPlaylist.user_id === user?.id;
   const playbackLocked = !isAdmin;
+
+  // Listen for user interaction to enable audio
+  useEffect(() => {
+    const handleInteraction = () => {
+      setUserInteracted(true);
+      // If there's a pending track, play it now
+      if (pendingTrack && audioRef.current) {
+        audioRef.current.src = pendingTrack.track.url;
+        audioRef.current.play().catch(console.error);
+      }
+      // Remove listeners after first interaction
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+  }, [pendingTrack]);
 
   useEffect(() => {
     if (user) {
@@ -84,6 +112,8 @@ export default function MusicPlayer() {
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
     const onEnded = () => {
       if (repeat) {
         audio.currentTime = 0;
@@ -96,11 +126,15 @@ export default function MusicPlayer() {
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
     };
   }, [repeat]);
 
@@ -285,9 +319,14 @@ export default function MusicPlayer() {
     
     if (audioRef.current) {
       audioRef.current.src = track.url;
-      audioRef.current.play().catch(() => {
-        // Silently handle autoplay block - browser requires user interaction first
-      });
+      
+      if (userInteracted) {
+        // User has interacted, we can play immediately
+        audioRef.current.play().catch(console.error);
+      } else {
+        // Store as pending track - will play when user interacts
+        setPendingTrack({ track, index });
+      }
     }
   };
 
@@ -295,12 +334,15 @@ export default function MusicPlayer() {
     if (!audioRef.current || !currentTrack) return;
     if (playbackLocked) return;
     
+    // Mark user as having interacted
+    setUserInteracted(true);
+    setPendingTrack(null);
+    
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(console.error);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const playNext = () => {
