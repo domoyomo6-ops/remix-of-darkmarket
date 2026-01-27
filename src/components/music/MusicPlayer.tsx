@@ -358,9 +358,10 @@ export default function MusicPlayer() {
 
     const { error: requestError } = await supabase.from('music_requests').insert({
       user_id: user.id,
-      track_title: requestForm.title.trim(),
-      track_url: requestForm.url.trim() || null,
-      amount: amountValue,
+      title: requestForm.title.trim(),
+      source_url: requestForm.url.trim() || '',
+      source_type: 'url',
+      status: 'pending',
     });
 
     if (requestError) {
