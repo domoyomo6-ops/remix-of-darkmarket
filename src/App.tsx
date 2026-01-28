@@ -25,6 +25,7 @@ const Lounge = lazy(() => import("./pages/Lounge"));
 const Announcements = lazy(() => import("./pages/Announcements"));
 const Homepage = lazy(() => import("./pages/Homepage"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
+const Transactions = lazy(() => import("./pages/Transactions"));
 
 // Loading fallback component
 const RouteLoader = () => (
@@ -92,6 +93,7 @@ function AppRoutes() {
           <Route path="/forum" element={<Forum />} />
           <Route path="/lounge" element={<Lounge />} />
           <Route path="/giftcards" element={<GiftCards />} />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
