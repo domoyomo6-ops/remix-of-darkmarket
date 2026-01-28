@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare } from 'lucide-react';
+import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -141,6 +141,13 @@ export default function Header() {
                 >
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   MY ORDERS
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => navigate('/transactions')}
+                  className="font-mono text-primary/80 hover:text-primary focus:text-primary focus:bg-primary/10"
+                >
+                  <Receipt className="w-4 h-4 mr-2" />
+                  TRANSACTIONS
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem 
