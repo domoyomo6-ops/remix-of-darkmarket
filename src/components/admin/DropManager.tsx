@@ -190,5 +190,25 @@ export default function DropManager() {
     </div>
   );
 }
+const toggleActive = async (id: string, current: boolean) => {
+  const { error } = await supabase
+    .from("product_drops")
+    .update({ is_active: !current })
+    .eq("id", id);
 
+  if (error) {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setDrops((prev) =>
+    prev.map((d) =>
+      d.id === id ? { ...d, is_active: !current } : d
+    )
+  );
+};
 }
