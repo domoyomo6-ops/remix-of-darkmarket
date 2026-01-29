@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Users, ShoppingCart, DollarSign, Loader2, Terminal, Bell, CreditCard, Wallet, MessageCircle, Bitcoin, Gift } from 'lucide-react';
+import { Package, Users, ShoppingCart, DollarSign, Loader2, Terminal, Bell, CreditCard, Wallet, MessageCircle, Bitcoin, Gift, ArchiveX } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/layout/MainLayout';
 import ProductManager from '@/components/admin/ProductManager';
+import SoldProductsManager from '@/components/admin/SoldProductsManager';
 import UserInviteManager from '@/components/admin/UserInviteManager';
 import AnnouncementManager from '@/components/admin/AnnouncementManager';
 import PaymentSettingsManager from '@/components/admin/PaymentSettingsManager';
@@ -131,6 +132,14 @@ export default function Admin() {
                 <span className="sm:hidden">PROD</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="sold" 
+                className="flex-1 sm:flex-none font-mono text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <ArchiveX className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">SOLD</span>
+                <span className="sm:hidden">SOLD</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="support" 
                 className="flex-1 sm:flex-none font-mono text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
@@ -190,6 +199,10 @@ export default function Admin() {
 
             <TabsContent value="products">
               <ProductManager />
+            </TabsContent>
+
+            <TabsContent value="sold">
+              <SoldProductsManager />
             </TabsContent>
 
             <TabsContent value="support">
