@@ -15,13 +15,18 @@ const logStep = (step: string, details?: unknown) => {
   );
 };
 
+const jsonOk = () =>
+  new Response(JSON.stringify({ ok: true }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const botToken = Deno.env.get("7810462224:AAFbspahTHBSqnaivE9sdyri1dW03IaGJ90);
+    const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -32,27 +37,25 @@ serve(async (req) => {
     const body = await req.json();
     logStep("Webhook received", body);
 
-    /* -------------------------------- PRE-CHECKOUT -------------------------------- */
+    /* ============================ PRE-CHECKOUT ============================ */
     if (body.pre_checkout_query) {
-      const { id } = body.pre_checkout_query;
-
       await fetch(
         `https://api.telegram.org/bot${botToken}/answerPreCheckoutQuery`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pre_checkout_query_id: id, ok: true }),
+          body: JSON.stringify({
+            pre_checkout_query_id: body.pre_checkout_query.id,
+            ok: true,
+          }),
         }
       );
 
-      logStep("Pre-checkout approved", { id });
-
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      logStep("Pre-checkout approved", body.pre_checkout_query.id);
+      return jsonOk();
     }
 
-    /* ------------------------------ SUCCESSFUL PAYMENT ----------------------------- */
+    /* ========================= SUCCESSFUL PAYMENT ========================= */
     if (body.message?.successful_payment) {
       const payment = body.message.successful_payment;
       const chatId = body.message.chat.id;
@@ -61,11 +64,11 @@ serve(async (req) => {
         auth: { persistSession: false },
       });
 
-      const payload = payment.invoice_payload; // topup:userId:amount
-      const [type, userId, amountRaw] = payload.split(":");
+      const [type, userId, amountRaw] =
+        payment.invoice_payload.split(":");
 
       if (type !== "topup") {
-        throw new Error("Invalid payload type");
+        throw new Error("Invalid invoice payload");
       }
 
       const amount = Number(amountRaw);
@@ -76,14 +79,7 @@ serve(async (req) => {
       const starsPaid = payment.total_amount;
       const paymentRef = payment.telegram_payment_charge_id;
 
-      logStep("Processing payment", {
-        userId,
-        amount,
-        starsPaid,
-        paymentRef,
-      });
-
-      /* --------- IDEMPOTENCY CHECK --------- */
+      /* ---------- IDEMPOTENCY ---------- */
       const { data: existingTx } = await supabase
         .from("wallet_transactions")
         .select("id")
@@ -92,32 +88,27 @@ serve(async (req) => {
 
       if (existingTx) {
         logStep("Duplicate payment ignored", paymentRef);
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonOk();
       }
 
-      /* --------- GET OR CREATE WALLET --------- */
-      let { data: wallet, error } = await supabase
+      /* ---------- ENSURE WALLET ---------- */
+      const { data: wallet, error } = await supabase
         .from("user_wallets")
-        .select("*")
+        .select("id")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (error) throw error;
 
       if (!wallet) {
-        const { data: newWallet, error: createError } = await supabase
+        const { error: createError } = await supabase
           .from("user_wallets")
-          .insert({ user_id: userId, balance: 0 })
-          .select()
-          .single();
+          .insert({ user_id: userId, balance: 0 });
 
         if (createError) throw createError;
-        wallet = newWallet;
       }
 
-      /* --------- ATOMIC BALANCE UPDATE --------- */
+      /* ---------- ATOMIC BALANCE UPDATE ---------- */
       const { error: balanceError } = await supabase.rpc(
         "increment_wallet_balance",
         {
@@ -128,17 +119,17 @@ serve(async (req) => {
 
       if (balanceError) throw balanceError;
 
-      /* --------- LOG TRANSACTION --------- */
+      /* ---------- LOG TRANSACTION ---------- */
       await supabase.from("wallet_transactions").insert({
         user_id: userId,
-        amount: amount,
+        amount,
         type: "topup",
         payment_method: "telegram_stars",
         payment_reference: paymentRef,
         description: `${starsPaid} Telegram Stars`,
       });
 
-      /* --------- CONFIRMATION MESSAGE --------- */
+      /* ---------- CONFIRM USER ---------- */
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,19 +138,15 @@ serve(async (req) => {
           text:
             `✅ Payment successful!\n\n` +
             `💰 $${amount.toFixed(2)} added to your wallet\n` +
-            `⭐ Stars paid: ${starsPaid}\n\n` +
-            `Thank you for your purchase!`,
+            `⭐ Stars paid: ${starsPaid}`,
         }),
       });
 
       logStep("Wallet top-up completed", { userId, amount });
-
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk();
     }
 
-    /* ---------------------------------- /START ---------------------------------- */
+    /* ================================ /START ================================ */
     if (body.message?.text?.startsWith("/start")) {
       const chatId = body.message.chat.id;
       const [, deepLink] = body.message.text.split(" ");
@@ -202,14 +189,10 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk();
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonOk();
   } catch (err) {
     logStep("ERROR", err);
     return new Response(
