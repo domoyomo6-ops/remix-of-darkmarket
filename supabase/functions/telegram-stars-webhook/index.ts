@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+    const botToken = Deno.env.get("7810462224:AAFbspahTHBSqnaivE9sdyri1dW03IaGJ90);
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
