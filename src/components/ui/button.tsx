@@ -2,7 +2,6 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -36,6 +35,10 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   isLoading?: boolean;
+  isAdmin?: boolean;           // 🔐 admin-only toggle
+  maxClaims?: number;           // 🧠 max_claims limit
+  currentClaims?: number;       // 🧠 current claims
+  onSync?: () => void;          // 🔄 realtime sync callback
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -47,6 +50,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       asChild = false,
       isLoading = false,
       disabled,
+      isAdmin = false,
+      maxClaims,
+      currentClaims,
+      onSync,
       children,
       ...props
     },
@@ -54,11 +61,22 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : "button";
 
+    // Auto-disable if max claims reached
+    const isMaxedOut = maxClaims !== undefined && currentClaims !== undefined && currentClaims >= maxClaims;
+
+    // Disable for non-admins if admin-only
+    const shouldDisable = (isAdmin === false) || isLoading || disabled || isMaxedOut;
+
     return (
       <Comp
         ref={ref}
         className={cn(buttonVariants({ variant, size, className }))}
-        disabled={disabled || isLoading}
+        disabled={shouldDisable}
+        aria-busy={isLoading}
+        onClick={(e) => {
+          if (onSync) onSync(); // 🔄 realtime sync
+          if (props.onClick) props.onClick(e);
+        }}
         {...props}
       >
         {isLoading && <Loader2 className="animate-spin" />}
