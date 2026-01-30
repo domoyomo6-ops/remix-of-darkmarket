@@ -43,6 +43,7 @@ export default function SupportChatBox() {
   const [chat, setChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
@@ -50,7 +51,6 @@ export default function SupportChatBox() {
   const [newOrderText, setNewOrderText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch chat + support status
   useEffect(() => {
     if (user) {
       checkExistingChat();
@@ -58,7 +58,6 @@ export default function SupportChatBox() {
     }
   }, [user]);
 
-  // Real-time messages
   useEffect(() => {
     if (!chat) return;
     const channel = supabase
@@ -78,7 +77,6 @@ export default function SupportChatBox() {
         }
       )
       .subscribe();
-
     return () => supabase.removeChannel(channel);
   }, [chat, isOpen, isMinimized]);
 
@@ -127,9 +125,12 @@ export default function SupportChatBox() {
 
   const sendMessage = async () => {
     if (!user || !newMessage.trim()) return;
+    setSending(true);
     let currentChat = chat;
-    if (!currentChat) currentChat = await createChat();
-    if (!currentChat) return;
+    if (!currentChat) {
+      currentChat = await createChat();
+      if (!currentChat) return setSending(false);
+    }
     const { error } = await supabase.from('support_messages').insert({
       chat_id: currentChat.id,
       sender_id: user.id,
@@ -138,13 +139,22 @@ export default function SupportChatBox() {
     });
     if (error) toast.error('Failed to send message');
     else setNewMessage(''), setUnreadCount(0), setHasNewMessage(false);
+    setSending(false);
+  };
+
+  const markAsRead = async () => {
+    if (!chat) return;
+    await supabase.from('support_messages').update({ is_read: true }).eq('chat_id', chat.id).eq('is_read', false);
+    setUnreadCount(0);
+    setHasNewMessage(false);
   };
 
   const addManualOrder = () => {
     if (!newOrderText.trim()) return;
+    const items = newOrderText.split(',').map(i => i.trim()).filter(Boolean);
     const newOrder: Order = {
-      id: String(Date.now()),
-      items: newOrderText.split(',').map(i => i.trim()),
+      id: (orders.length + 1).toString(),
+      items,
       status: 'pending',
       created_at: new Date().toISOString(),
     };
@@ -159,94 +169,98 @@ export default function SupportChatBox() {
 
   return (
     <>
-      {/* Floating button */}
       <button
-        onClick={() => { setIsOpen(true); setIsMinimized(false); }}
-        className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-110 transition flex items-center justify-center ${hasNewMessage ? 'animate-bounce' : ''} ${isOpen && !isMinimized ? 'hidden' : ''}`}
+        onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
+        className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg 
+          hover:scale-110 transition-all duration-300 flex items-center justify-center
+          ${hasNewMessage ? 'animate-bounce' : ''} 
+          ${isOpen && !isMinimized ? 'hidden' : ''}`}
       >
         {hasNewMessage ? <BellRing className="w-6 h-6 animate-pulse" /> : <MessageCircle className="w-6 h-6" />}
-        {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">{unreadCount}</span>}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold animate-pulse">
+            {unreadCount}
+          </span>
+        )}
       </button>
 
-      {/* Terminal */}
       {isOpen && (
-        <div className={`fixed bottom-4 right-4 z-50 w-[480px] sm:w-[600px] h-[550px] bg-black/95 border border-primary/50 rounded-xl shadow-2xl overflow-hidden flex flex-col`}>
+        <div className={`fixed bottom-4 right-4 z-50 w-[480px] sm:w-[600px] h-[550px] bg-black/95 border border-primary/50 rounded-xl shadow-2xl
+          flex flex-col transform-gpu transition-transform duration-300
+          hover:rotate-[-1deg] hover:scale-105 hover:shadow-[0_20px_50px_rgba(0,255,0,0.5)]`}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-primary/50">
+          <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-green-500 shadow-inner">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="font-mono text-green-400 text-sm">SUPPORT TERMINAL</span>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-white/10 text-green-400">
+              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-green-700/30 text-green-400">
                 {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/20 text-red-400">
+              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/30 text-red-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {!isMinimized && (
-            <Tabs defaultValue="chat" className="flex-1 flex flex-col">
-              <TabsList className="flex bg-black/90 border-b border-primary/50">
+            <Tabs defaultValue="chat" className="flex-1 flex flex-col perspective-1000">
+              <TabsList className="flex bg-black/90 border-b border-green-500">
                 <TabsTrigger value="chat" className="flex-1 font-mono text-xs text-green-400">💬 Chat</TabsTrigger>
                 <TabsTrigger value="exchange" className="flex-1 font-mono text-xs text-green-400"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs text-green-400">🍔 Orders</TabsTrigger>
               </TabsList>
 
               {/* CHAT */}
-              <TabsContent value="chat" className="flex-1 flex flex-col p-4 bg-black/90">
+              <TabsContent value="chat" className="flex-1 flex flex-col p-4 bg-black/90 transform-gpu">
                 <div className="flex-1 flex flex-col justify-end gap-2">
-                  {messages.length === 0 ? (
-                    <p className="text-sm text-green-400 font-mono text-center flex-1 flex items-center justify-center">No messages yet</p>
-                  ) : messages.map(msg => (
+                  {messages.map((msg) => (
                     <div key={msg.id} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-green-900 text-green-400' : 'bg-zinc-900 text-white'}`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-green-900/80 text-green-400' : 'bg-zinc-800 text-white'}`}>
                         {msg.sender_type !== 'user' && <p className="text-[10px] text-green-400 mb-1">{msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}</p>}
-                        <p className="whitespace-pre-wrap break-words font-mono">{msg.message}</p>
+                        <p className="whitespace-pre-wrap break-words">{msg.message}</p>
                         <p className="text-[10px] text-green-400 mt-1 text-right">{formatTime(msg.created_at)}</p>
                       </div>
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input */}
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                    placeholder="Type message..."
-                    className="flex-1 bg-black/50 border border-green-700 text-green-400 font-mono text-sm"
-                  />
-                  <Button onClick={sendMessage} className="px-3 py-2 bg-green-700 hover:bg-green-600 text-white font-mono text-sm">
-                    <Send className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type message..."
+                      className="flex-1 bg-black/70 border-green-500 text-green-400 font-mono"
+                    />
+                    <Button onClick={sendMessage} size="sm" className="px-3 bg-green-700 hover:bg-green-600">
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
 
               {/* EXCHANGE */}
-              <TabsContent value="exchange" className="flex-1 p-4 bg-black/90">
+              <TabsContent value="exchange" className="flex-1 p-4 bg-black/90 transform-gpu">
                 <CryptoExchange />
               </TabsContent>
 
               {/* ORDERS */}
-              <TabsContent value="orders" className="flex-1 flex flex-col p-4 bg-black/90">
+              <TabsContent value="orders" className="flex-1 flex flex-col p-4 bg-black/90 transform-gpu">
                 <textarea
                   placeholder="Type full order here (items separated by commas)"
                   value={newOrderText}
                   onChange={(e) => setNewOrderText(e.target.value)}
-                  className="w-full h-[200px] resize-none px-3 py-2 rounded border border-green-700 bg-black text-green-400 font-mono text-lg"
+                  className="w-full h-[220px] resize-none px-3 py-2 rounded border border-green-500 bg-black text-green-400 font-mono text-lg shadow-inner"
                 />
-                <Button onClick={addManualOrder} className="w-full mt-2 px-3 py-2 bg-green-700 hover:bg-green-600 text-white font-mono text-sm">Add Order</Button>
-
+                <Button onClick={addManualOrder} className="w-full mt-2 px-3 py-2 bg-green-700 hover:bg-green-600 text-white font-mono text-sm shadow-lg transform-gpu hover:scale-105 hover:shadow-[0_10px_20px_rgba(0,255,0,0.6)]">
+                  Add Order
+                </Button>
                 <div className="flex-1 flex flex-col gap-2 mt-2">
                   {orders.length === 0 ? (
                     <p className="text-green-400 font-mono text-sm flex-1 flex items-center justify-center">No orders yet.</p>
                   ) : orders.map(order => (
-                    <div key={order.id} className="p-3 border border-green-700 rounded-lg bg-zinc-900 flex-shrink-0">
+                    <div key={order.id} className="p-3 border border-green-500 rounded-lg bg-zinc-900 flex-shrink-0 shadow-md">
                       <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
                       <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
                       <span className={`px-2 py-1 rounded text-xs text-white ${order.status === 'pending' ? 'bg-amber-400' : order.status === 'preparing' ? 'bg-blue-400' : 'bg-green-500'}`}>
