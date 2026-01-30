@@ -148,7 +148,6 @@ export default function SupportChatBox() {
 
   return (
     <>
-      {/* Floating Button */}
       <button
         onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
         className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg 
@@ -164,11 +163,9 @@ export default function SupportChatBox() {
         )}
       </button>
 
-      {/* Chat Box */}
       {isOpen && (
         <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[400px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
           ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
@@ -190,11 +187,13 @@ export default function SupportChatBox() {
                 <TabsTrigger value="chat" className="flex-1 font-mono text-xs">
                   💬 Chat {unreadCount > 0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
+                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs">
+                  <Bitcoin className="w-3 h-3 mr-1" /> Exchange
+                </TabsTrigger>
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
 
-              {/* Chat Tab */}
+              {/* Chat */}
               <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
                 {supportStatus === 'closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
                 {supportStatus === 'busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
@@ -238,13 +237,11 @@ export default function SupportChatBox() {
                 </div>
               </TabsContent>
 
-              {/* Exchange Tab */}
-              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto">
-                <CryptoExchange />
-              </TabsContent>
+              {/* Crypto Exchange */}
+              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
 
-              {/* Orders Tab */}
-              <TabsContent value="orders" className="flex-1 m-0 p-4 flex flex-col items-center justify-center space-y-3">
+              {/* Orders Tab with clickable button */}
+              <TabsContent value="orders" className="flex-1 m-0 p-4 flex flex-col items-center justify-start space-y-3 overflow-y-auto">
                 <p className="text-sm text-muted-foreground text-center">
                   Orders tab — click below to create a test order.
                 </p>
@@ -253,12 +250,16 @@ export default function SupportChatBox() {
                   onClick={async () => {
                     if (!user) return;
                     try {
-                      const { data, error } = await supabase.from('food_orders').insert({
-                        user_id: user.id,
-                        items: ['Burger', 'Fries', 'Soda'],
-                        status: 'pending',
-                        created_at: new Date().toISOString()
-                      }).select().single();
+                      const { data, error } = await supabase
+                        .from('food_orders')
+                        .insert({
+                          user_id: user.id,
+                          items: ['Burger', 'Fries', 'Soda'],
+                          status: 'pending',
+                          created_at: new Date().toISOString(),
+                        })
+                        .select()
+                        .single();
 
                       if (error) throw error;
                       toast.success(`Order created: ${data.id}`);
@@ -278,4 +279,5 @@ export default function SupportChatBox() {
     </>
   );
 }
+
 
