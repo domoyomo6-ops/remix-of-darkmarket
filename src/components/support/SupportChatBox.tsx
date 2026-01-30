@@ -49,26 +49,17 @@ export default function SupportChatBox() {
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // DRAG STATES
+  // Orders
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [newOrderText, setNewOrderText] = useState('');
+
+  // Drag state
   const [position, setPosition] = useState({ x: 24, y: 24 });
   const dragRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [newOrderText, setNewOrderText] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      checkExistingChat();
-      fetchSupportStatus();
-    }
-  }, [user]);
-
-  useEffect(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
-  useEffect(() => { if (unreadCount > 0) setIsOpen(true); }, [unreadCount]);
-
-  // Drag handlers
+  // DRAG EVENTS
   const onMouseDown = (e: React.MouseEvent) => {
     dragging.current = true;
     dragOffset.current = {
@@ -89,6 +80,16 @@ export default function SupportChatBox() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      checkExistingChat();
+      fetchSupportStatus();
+    }
+  }, [user]);
+
+  useEffect(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
+  useEffect(() => { if (unreadCount > 0) setIsOpen(true); }, [unreadCount]);
 
   const fetchSupportStatus = async () => {
     const { data } = await supabase.from('site_settings').select('support_status').single();
@@ -194,7 +195,7 @@ export default function SupportChatBox() {
         <div
           ref={dragRef}
           style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
-          className={`fixed top-0 left-0 z-50 w-[360px] sm:w-[400px] select-none ${isMinimized ? 'h-12' : 'h-[500px]'}`}
+          className={`fixed top-0 left-0 z-50 select-none w-[360px] sm:w-[400px] ${isMinimized ? 'h-12' : 'h-[500px]'}`}
         >
           {/* HEADER */}
           <div
@@ -225,11 +226,8 @@ export default function SupportChatBox() {
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
 
-              {/* CHAT TAB */}
+              {/* CHAT */}
               <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0">
-                {supportStatus === 'closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
-                {supportStatus === 'busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
-
                 <div className="flex-1 flex flex-col justify-end p-4 space-y-3">
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground text-sm py-8">
@@ -238,7 +236,7 @@ export default function SupportChatBox() {
                       <p className="text-xs mt-1">We typically reply within minutes</p>
                     </div>
                   ) : (
-                    messages.map((msg) => (
+                    messages.map(msg => (
                       <div key={msg.id} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-primary/20 text-primary' : msg.sender_type === 'telegram' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-foreground'}`}>
                           {msg.sender_type !== 'user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}</p>}
@@ -260,19 +258,18 @@ export default function SupportChatBox() {
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                       placeholder="Type a message..."
                       className="flex-1 bg-black/50 border-primary/30 text-sm"
-                      disabled={supportStatus === 'closed'}
                     />
-                    <Button onClick={sendMessage} disabled={sending || !newMessage.trim() || supportStatus === 'closed'} size="sm" className="px-3">
+                    <Button onClick={sendMessage} disabled={sending || !newMessage.trim()} size="sm" className="px-3">
                       {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
               </TabsContent>
 
-              {/* EXCHANGE TAB */}
+              {/* EXCHANGE */}
               <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-hidden"><CryptoExchange /></TabsContent>
 
-              {/* ORDERS TAB */}
+              {/* ORDERS */}
               <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4 gap-2 bg-black/95">
                 <textarea
                   placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
@@ -286,6 +283,7 @@ export default function SupportChatBox() {
                 >
                   Add Order
                 </button>
+
                 <div className="flex-1 grid grid-cols-2 gap-3 mt-2">
                   {orders.length === 0 ? (
                     <div className="col-span-2 flex items-center justify-center text-sm text-green-400 font-mono bg-zinc-900 rounded-lg shadow-[0_0_10px_rgba(0,255,0,0.5)] p-4">
@@ -309,6 +307,7 @@ export default function SupportChatBox() {
     </>
   );
 }
+
 
 
 
