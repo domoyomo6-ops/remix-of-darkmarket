@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import CryptoExchange from './CryptoExchange';
-import FoodOrders from './FoodOrders'; // Manual creation only
 
 interface Message {
   id: string;
@@ -30,6 +29,14 @@ interface Chat {
   created_at: string;
 }
 
+interface Order {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'preparing' | 'delivered';
+  items: string[];
+  created_at: string;
+}
+
 export default function SupportChatBox() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -42,6 +49,10 @@ export default function SupportChatBox() {
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Orders state
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [newOrderText, setNewOrderText] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -145,16 +156,29 @@ export default function SupportChatBox() {
   const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const statusColors = { open: 'bg-green-500', closed: 'bg-red-500', busy: 'bg-amber-500' };
 
+  const addManualOrder = () => {
+    if (!newOrderText.trim()) return;
+
+    const order: Order = {
+      id: (Math.random() * 100000).toFixed(0),
+      user_id: user!.id,
+      status: 'pending',
+      items: newOrderText.split(',').map(i => i.trim()),
+      created_at: new Date().toISOString(),
+    };
+
+    setOrders([order, ...orders]);
+    setNewOrderText('');
+  };
+
   if (!user) return null;
 
   return (
     <>
+      {/* Floating Button */}
       <button
         onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
-        className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg 
-          hover:scale-110 transition-all duration-300 flex items-center justify-center
-          ${hasNewMessage ? 'animate-bounce' : ''} 
-          ${isOpen && !isMinimized ? 'hidden' : ''}`}
+        className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center ${hasNewMessage ? 'animate-bounce' : ''} ${isOpen && !isMinimized ? 'hidden' : ''}`}
       >
         {hasNewMessage ? <BellRing className="w-6 h-6 animate-pulse" /> : <MessageCircle className="w-6 h-6" />}
         {unreadCount > 0 && (
@@ -164,21 +188,18 @@ export default function SupportChatBox() {
         )}
       </button>
 
+      {/* Support Box */}
       {isOpen && (
-        <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[400px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
-          ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
+        <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[400px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300 ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
+          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
               <span className="font-mono text-primary text-sm">SUPPORT TERMINAL</span>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-white/10 text-zinc-400 hover:text-white">
-                {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-              </button>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400">
-                <X className="w-4 h-4" />
-              </button>
+              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-white/10 text-zinc-400 hover:text-white">{isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}</button>
+              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400"><X className="w-4 h-4" /></button>
             </div>
           </div>
 
@@ -190,6 +211,7 @@ export default function SupportChatBox() {
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
 
+              {/* Chat Tab */}
               <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
                 {supportStatus === 'closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
                 {supportStatus === 'busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
@@ -233,11 +255,42 @@ export default function SupportChatBox() {
                 </div>
               </TabsContent>
 
+              {/* Exchange Tab */}
               <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
-              
-              {/* Orders Tab — Manual only */}
-              <TabsContent value="orders" className="flex-1 m-0 p-0 overflow-y-auto">
-                <FoodOrders userId={user.id} />
+
+              {/* Orders Tab */}
+              <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
+                <div className="flex flex-col h-full p-4 space-y-3">
+                  <textarea
+                    placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
+                    value={newOrderText}
+                    onChange={(e) => setNewOrderText(e.target.value)}
+                    className="flex-1 resize-none px-3 py-2 rounded border border-primary/30 bg-black/50 text-sm text-white mb-2"
+                  />
+                  <button
+                    onClick={addManualOrder}
+                    className="px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition w-full"
+                  >
+                    Add Order
+                  </button>
+
+                  <div className="flex-1 overflow-y-auto space-y-3 mt-2">
+                    {orders.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center">No orders yet. Type your order above and click "Add Order".</p>
+                    ) : (
+                      orders.map(order => (
+                        <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800">
+                          <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
+                          <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
+                          <span className={`px-2 py-1 rounded text-xs text-white ${order.status === 'pending' ? 'bg-amber-400' : order.status === 'preparing' ? 'bg-blue-400' : 'bg-green-500'}`}>
+                            {order.status.toUpperCase()}
+                          </span>
+                          <p className="text-[10px] text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString()}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           )}
@@ -246,6 +299,7 @@ export default function SupportChatBox() {
     </>
   );
 }
+
 
 
 
