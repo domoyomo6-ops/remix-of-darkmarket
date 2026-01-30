@@ -17,11 +17,32 @@ export default function FoodOrders({ userId }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch orders initially and set up realtime subscription
   useEffect(() => {
-    if (userId) fetchOrders();
+    if (!userId) return;
+
+    fetchOrders();
+
+    // Subscribe to realtime updates for this user's orders
+    const channel = supabase
+      .channel(`food_orders_${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'food_orders', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          console.log('Realtime order update:', payload);
+          fetchOrders(); // Refetch orders on insert/update/delete
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const fetchOrders = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from('food_orders')
       .select('*')
