@@ -235,9 +235,34 @@ export default function SupportChatBox() {
               {/* Exchange Tab */}
               <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
 
-              {/* Orders Tab Placeholder */}
-              <TabsContent value="orders" className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-                Orders tab placeholder — will show orders once your database is ready.
+              {/* Orders Tab with "Create Test Order" */}
+              <TabsContent value="orders" className="flex-1 flex flex-col items-center justify-center p-4 space-y-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  Orders tab placeholder — click below to create a test order once the table exists.
+                </p>
+
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    if (!user) return;
+                    try {
+                      const { data, error } = await supabase.from('food_orders').insert({
+                        user_id: user.id,
+                        items: ['Burger', 'Fries', 'Soda'],
+                        status: 'pending',
+                        created_at: new Date().toISOString()
+                      }).select().single();
+
+                      if (error) throw error;
+                      toast.success(`Order created: ${data.id}`);
+                    } catch (err) {
+                      console.error(err);
+                      toast.error('Failed to create order — make sure food_orders table exists.');
+                    }
+                  }}
+                >
+                  Create Test Order
+                </Button>
               </TabsContent>
             </Tabs>
           )}
@@ -245,4 +270,6 @@ export default function SupportChatBox() {
       )}
     </>
   );
+}
+
 }
