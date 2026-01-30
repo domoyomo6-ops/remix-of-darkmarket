@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 
 interface Order {
   id: string;
@@ -15,61 +14,21 @@ interface Props {
 
 export default function FoodOrders({ userId }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [newOrderText, setNewOrderText] = useState('');
 
-  useEffect(() => {
-    if (userId) initOrders();
-  }, [userId]);
+  const addManualOrder = () => {
+    if (!newOrderText.trim()) return;
 
-  const initOrders = async () => {
-    setLoading(true);
+    const order: Order = {
+      id: (Math.random() * 100000).toFixed(0), // temporary ID
+      user_id: userId,
+      status: 'pending',
+      items: newOrderText.split(',').map(i => i.trim()),
+      created_at: new Date().toISOString(),
+    };
 
-    // 1. Create table if it doesn't exist
-    try {
-      await supabase.rpc('create_food_orders_table_if_not_exists');
-    } catch (err) {
-      console.error('Table creation failed:', err);
-    }
-
-    // 2. Fetch orders
-    await fetchOrders();
-    setLoading(false);
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('food_orders')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data as Order[]);
-    } catch (err) {
-      console.error('Failed to fetch orders:', err);
-    }
-  };
-
-  const createTestOrder = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('food_orders')
-        .insert({
-          user_id: userId,
-          items: ['Pizza', 'Soda'],
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update orders immediately
-      setOrders(prev => [data as Order, ...prev]);
-    } catch (err) {
-      console.error('Failed to create test order:', err);
-    }
+    setOrders([order, ...orders]);
+    setNewOrderText('');
   };
 
   const statusColors: Record<string, string> = {
@@ -78,43 +37,45 @@ export default function FoodOrders({ userId }: Props) {
     delivered: 'bg-green-500',
   };
 
-  if (loading) return <p className="p-4 text-sm text-muted-foreground">Loading orders...</p>;
-
   return (
-    <div className="flex flex-col p-4 space-y-3">
-      {orders.length === 0 && (
-        <div className="p-4 text-sm text-muted-foreground">
-          No orders found.
-          <button
-            onClick={createTestOrder}
-            className="ml-2 px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary/80"
-          >
-            Create Test Order
-          </button>
-        </div>
-      )}
-      {orders.map(order => (
-        <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800">
-          <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
-          <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-          <span className={`px-2 py-1 rounded text-xs text-white ${statusColors[order.status]}`}>
-            {order.status.toUpperCase()}
-          </span>
-          <p className="text-[10px] text-muted-foreground mt-1">
-            {new Date(order.created_at).toLocaleString()}
-          </p>
-        </div>
-      ))}
-
-      {orders.length > 0 && (
+    <div className="flex flex-col h-full w-full p-4 space-y-3">
+      {/* Manual Order Input */}
+      <div className="flex flex-col mb-3">
+        <textarea
+          placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
+          value={newOrderText}
+          onChange={(e) => setNewOrderText(e.target.value)}
+          className="flex-1 resize-none px-3 py-2 rounded border border-primary/30 bg-black/50 text-sm text-white mb-2"
+        />
         <button
-          onClick={createTestOrder}
-          className="mt-2 px-3 py-1 text-sm bg-primary text-white rounded hover:bg-primary/80"
+          onClick={addManualOrder}
+          className="px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition w-full"
         >
-          Create Test Order
+          Add Order
         </button>
-      )}
+      </div>
+
+      {/* Orders List */}
+      <div className="flex-1 overflow-y-auto space-y-3">
+        {orders.length === 0 ? (
+          <p className="p-4 text-sm text-muted-foreground text-center">
+            No orders yet. Type your order above and click "Add Order".
+          </p>
+        ) : (
+          orders.map(order => (
+            <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800">
+              <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
+              <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
+              <span className={`px-2 py-1 rounded text-xs text-white ${statusColors[order.status]}`}>
+                {order.status.toUpperCase()}
+              </span>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {new Date(order.created_at).toLocaleString()}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
-
