@@ -302,8 +302,9 @@ export default function SupportChatBox() {
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
-        )}
+          )}
+        </div>
+      )}
     </>
   );
 }
