@@ -33,8 +33,9 @@ export default function WalletBalance() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          if (payload.new?.balance !== undefined) {
-            setBalance(payload.new.balance);
+          const newData = payload.new as { balance?: number } | null;
+          if (newData?.balance !== undefined) {
+            setBalance(newData.balance);
           }
         }
       )

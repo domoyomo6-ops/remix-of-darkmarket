@@ -59,6 +59,24 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_invite_audit: {
+        Row: {
+          invite_id: string | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+        }
+        Insert: {
+          invite_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+        }
+        Update: {
+          invite_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+        }
+        Relationships: []
+      }
       admin_invites: {
         Row: {
           created_at: string
@@ -249,6 +267,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      food_orders: {
+        Row: {
+          created_at: string
+          id: string
+          items: string[]
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items: string[]
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: string[]
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       forum_categories: {
         Row: {
@@ -987,26 +1029,32 @@ export type Database = {
       }
       profiles: {
         Row: {
+          balance: number
           created_at: string
           email: string
           full_name: string | null
           id: string
+          role: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          balance?: number
           created_at?: string
           email: string
           full_name?: string | null
           id?: string
+          role?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          balance?: number
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          role?: string
           updated_at?: string
           user_id?: string
         }
@@ -1525,11 +1573,16 @@ export type Database = {
         }
         Returns: Json
       }
+      create_food_orders_table_if_not_exists: {
+        Args: never
+        Returns: undefined
+      }
       create_order: {
         Args: { p_customer_email: string; p_product_id: string }
         Returns: Json
       }
       generate_gift_card_code: { Args: never; Returns: string }
+      get_my_email: { Args: never; Returns: string }
       get_or_create_wallet: {
         Args: { p_user_id: string }
         Returns: {
@@ -1558,6 +1611,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_wallet_balance: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: undefined
+      }
       place_game_wager: {
         Args: {
           p_game_id: string
@@ -1568,10 +1625,16 @@ export type Database = {
       }
       purchase_with_wallet: { Args: { p_product_id: string }; Returns: Json }
       redeem_gift_card: { Args: { p_code: string }; Returns: Json }
-      resolve_game: {
-        Args: { p_game_data?: Json; p_game_id: string; p_winner_id: string }
-        Returns: Json
-      }
+      refund_game_players: { Args: { p_game_id: string }; Returns: Json }
+      resolve_game:
+        | {
+            Args: { p_game_data?: Json; p_game_id: string; p_winner_id: string }
+            Returns: Json
+          }
+        | {
+            Args: { p_game_data?: Json; p_game_id: string; p_winner_id: string }
+            Returns: Json
+          }
       use_invite: {
         Args: { invite_email: string; user_id: string }
         Returns: undefined
