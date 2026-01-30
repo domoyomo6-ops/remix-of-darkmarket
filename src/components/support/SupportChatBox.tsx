@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
-  MessageCircle, X, Send, Minus, Maximize2, Image, 
-  Loader2, Bell, BellRing, ArrowDown, Bitcoin
+  MessageCircle, X, Send, Minus, Maximize2, Bitcoin, Bell, BellRing, Loader2 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import CryptoExchange from './CryptoExchange';
+import FoodOrders from './FoodOrders';
 
 interface Message {
   id: string;
@@ -42,9 +42,8 @@ export default function SupportChatBox() {
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Check for existing chat on mount
+  // Fetch chat and support status on mount
   useEffect(() => {
     if (user) {
       checkExistingChat();
@@ -52,7 +51,7 @@ export default function SupportChatBox() {
     }
   }, [user]);
 
-  // Real-time subscription
+  // Real-time subscription for chat messages
   useEffect(() => {
     if (!chat) return;
 
@@ -64,13 +63,11 @@ export default function SupportChatBox() {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages(prev => [...prev, newMsg]);
-          
-          // If message is from admin and chat is minimized/closed, show notification
+
           if (newMsg.sender_type !== 'user' && (isMinimized || !isOpen)) {
             setUnreadCount(prev => prev + 1);
             setHasNewMessage(true);
             playNotificationSound();
-            // Auto-open on new admin message
             setIsOpen(true);
             setIsMinimized(false);
           }
@@ -78,9 +75,7 @@ export default function SupportChatBox() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
   }, [chat, isOpen, isMinimized]);
 
   // Scroll to bottom on new messages
@@ -88,28 +83,22 @@ export default function SupportChatBox() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-open on page load if unread messages
+  // Auto-open on unread messages
   useEffect(() => {
-    if (unreadCount > 0) {
-      setIsOpen(true);
-    }
+    if (unreadCount > 0) setIsOpen(true);
   }, [unreadCount]);
 
   const playNotificationSound = () => {
-    // Create audio context for notification
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
     } catch (e) {
@@ -118,13 +107,8 @@ export default function SupportChatBox() {
   };
 
   const fetchSupportStatus = async () => {
-    const { data } = await supabase
-      .from('site_settings')
-      .select('support_status')
-      .single();
-    if (data?.support_status) {
-      setSupportStatus(data.support_status as any);
-    }
+    const { data } = await supabase.from('site_settings').select('support_status').single();
+    if (data?.support_status) setSupportStatus(data.support_status as any);
   };
 
   const checkExistingChat = async () => {
@@ -164,7 +148,7 @@ export default function SupportChatBox() {
   };
 
   const createChat = async () => {
-    if (!user) return;
+    if (!user) return null;
 
     const { data, error } = await supabase
       .from('support_chats')
@@ -205,7 +189,6 @@ export default function SupportChatBox() {
       toast.error('Failed to send message');
     } else {
       setNewMessage('');
-      // Mark as read when user sends
       setUnreadCount(0);
       setHasNewMessage(false);
     }
@@ -223,15 +206,9 @@ export default function SupportChatBox() {
     setHasNewMessage(false);
   };
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const statusColors = {
-    open: 'bg-green-500',
-    closed: 'bg-red-500',
-    busy: 'bg-amber-500',
-  };
+  const statusColors = { open: 'bg-green-500', closed: 'bg-red-500', busy: 'bg-amber-500' };
 
   if (!user) return null;
 
@@ -249,17 +226,12 @@ export default function SupportChatBox() {
           ${hasNewMessage ? 'animate-bounce' : ''} 
           ${isOpen && !isMinimized ? 'hidden' : ''}`}
       >
-        {hasNewMessage ? (
-          <BellRing className="w-6 h-6 animate-pulse" />
-        ) : (
-          <MessageCircle className="w-6 h-6" />
-        )}
+        {hasNewMessage ? <BellRing className="w-6 h-6 animate-pulse" /> : <MessageCircle className="w-6 h-6" />}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold animate-pulse">
             {unreadCount}
           </span>
         )}
-        {/* Notification ring effect */}
         {hasNewMessage && (
           <>
             <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-75" />
@@ -270,10 +242,9 @@ export default function SupportChatBox() {
 
       {/* Chat Box */}
       {isOpen && (
-        <div 
-          className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[400px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
-            ${isMinimized ? 'h-12' : 'h-[500px]'}`}
-        >
+        <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[400px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
+            ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
+          
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
             <div className="flex items-center gap-2">
@@ -281,53 +252,32 @@ export default function SupportChatBox() {
               <span className="font-mono text-primary text-sm">SUPPORT TERMINAL</span>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setIsMinimized(!isMinimized)}
-                className="p-1.5 rounded hover:bg-white/10 text-zinc-400 hover:text-white"
-              >
+              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-white/10 text-zinc-400 hover:text-white">
                 {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
               </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400"
-              >
+              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Content */}
+          {/* Tabs Content */}
           {!isMinimized && (
             <Tabs defaultValue="chat" className="h-[calc(100%-48px)] flex flex-col">
               <TabsList className="shrink-0 bg-black/50 border-b border-primary/20 rounded-none">
-                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">
-                  💬 Chat
+                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">💬 Chat
                   {unreadCount > 0 && (
-                    <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
-                      {unreadCount}
-                    </span>
+                    <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs">
-                  <Bitcoin className="w-3 h-3 mr-1" />
-                  Exchange
-                </TabsTrigger>
+                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
+                <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
 
               <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
-                {/* Status Banner */}
-                {supportStatus === 'closed' && (
-                  <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">
-                    Support is currently closed
-                  </div>
-                )}
-                {supportStatus === 'busy' && (
-                  <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">
-                    High volume - expect delays
-                  </div>
-                )}
+                {supportStatus === 'closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
+                {supportStatus === 'busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
 
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground text-sm py-8">
@@ -337,31 +287,12 @@ export default function SupportChatBox() {
                     </div>
                   ) : (
                     messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
-                            msg.sender_type === 'user'
-                              ? 'bg-primary/20 text-primary'
-                              : msg.sender_type === 'telegram'
-                              ? 'bg-blue-500/20 text-blue-400'
-                              : 'bg-zinc-800 text-foreground'
-                          }`}
-                        >
-                          {msg.sender_type !== 'user' && (
-                            <p className="text-[10px] text-muted-foreground mb-1">
-                              {msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}
-                            </p>
-                          )}
+                      <div key={msg.id} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-primary/20 text-primary' : msg.sender_type === 'telegram' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-foreground'}`}>
+                          {msg.sender_type !== 'user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}</p>}
                           <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                          {msg.file_url && (
-                            <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full" />
-                          )}
-                          <p className="text-[10px] text-muted-foreground mt-1 text-right">
-                            {formatTime(msg.created_at)}
-                          </p>
+                          {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full" />}
+                          <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
                         </div>
                       </div>
                     ))
@@ -369,7 +300,6 @@ export default function SupportChatBox() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input */}
                 <div className="shrink-0 p-3 border-t border-primary/20 bg-zinc-900">
                   <div className="flex gap-2">
                     <Input
@@ -380,20 +310,17 @@ export default function SupportChatBox() {
                       className="flex-1 bg-black/50 border-primary/30 text-sm"
                       disabled={supportStatus === 'closed'}
                     />
-                    <Button
-                      onClick={sendMessage}
-                      disabled={sending || !newMessage.trim() || supportStatus === 'closed'}
-                      size="sm"
-                      className="px-3"
-                    >
+                    <Button onClick={sendMessage} disabled={sending || !newMessage.trim() || supportStatus === 'closed'} size="sm" className="px-3">
                       {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto">
-                <CryptoExchange />
+              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
+
+              <TabsContent value="orders" className="flex-1 m-0 p-0 overflow-y-auto">
+                <FoodOrders userId={user.id} />
               </TabsContent>
             </Tabs>
           )}
