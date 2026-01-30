@@ -39,7 +39,6 @@ export default function SupportChatBox() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [chat, setChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -48,27 +47,17 @@ export default function SupportChatBox() {
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Orders local state
+  // Orders state
   const [orders, setOrders] = useState<Order[]>([]);
   const [newOrderText, setNewOrderText] = useState('');
 
-  // Effects for chat
-  useEffect(() => {
-    if (user) {
-      checkExistingChat();
-    }
-  }, [user]);
-
   useEffect(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
-  useEffect(() => { if (unreadCount > 0) setIsOpen(true); }, [unreadCount]);
 
-  const checkExistingChat = async () => {
-    // Placeholder: No supabase for test orders
-  };
+  const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const statusColors = { open: 'bg-green-500', closed: 'bg-red-500', busy: 'bg-amber-500' };
 
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!user || !newMessage.trim()) return;
-    setSending(true);
     const newMsg: Message = {
       id: Date.now().toString(),
       sender_id: user.id,
@@ -81,15 +70,10 @@ export default function SupportChatBox() {
     };
     setMessages(prev => [...prev, newMsg]);
     setNewMessage('');
-    setSending(false);
     setUnreadCount(0);
     setHasNewMessage(false);
   };
 
-  const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const statusColors = { open: 'bg-green-500', closed: 'bg-red-500', busy: 'bg-amber-500' };
-
-  // Add manual order
   const addManualOrder = () => {
     if (!newOrderText.trim()) return;
     const items = newOrderText.split(',').map(i => i.trim()).filter(Boolean);
@@ -150,7 +134,7 @@ export default function SupportChatBox() {
 
               {/* Tabs */}
               <TabsList className="flex shrink-0 bg-black/50 border-b border-primary/20">
-                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">💬 Chat {unreadCount > 0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}</TabsTrigger>
+                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">💬 Chat</TabsTrigger>
                 <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
@@ -162,15 +146,13 @@ export default function SupportChatBox() {
                     <div className="text-center text-muted-foreground text-sm py-8">
                       <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p>Start a conversation</p>
-                      <p className="text-xs mt-1">We typically reply within minutes</p>
                     </div>
                   ) : (
-                    messages.map((msg) => (
+                    messages.map(msg => (
                       <div key={msg.id} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-primary/20 text-primary' : msg.sender_type === 'telegram' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-foreground'}`}>
+                        <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-primary/20 text-primary' : 'bg-zinc-800 text-foreground'}`}>
                           {msg.sender_type !== 'user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}</p>}
                           <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                          {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full" />}
                           <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
                         </div>
                       </div>
@@ -198,8 +180,8 @@ export default function SupportChatBox() {
                 <CryptoExchange />
               </TabsContent>
 
-              {/* Orders Tab */}
-              <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4">
+              {/* Orders Tab (Terminal Style) */}
+              <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4 overflow-y-auto">
                 <textarea
                   placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
                   value={newOrderText}
@@ -215,16 +197,16 @@ export default function SupportChatBox() {
 
                 <div className="flex-1 flex flex-col space-y-3 mt-3">
                   {orders.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center">No orders yet. Type your order above and click "Add Order".</p>
+                    <p className="text-sm text-muted-foreground text-center">No orders yet.</p>
                   ) : (
                     orders.map(order => (
-                      <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800">
-                        <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
-                        <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-                        <span className="px-2 py-1 rounded text-xs text-white bg-amber-400">
-                          {order.status.toUpperCase()}
-                        </span>
-                        <p className="text-[10px] text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString()}</p>
+                      <div key={order.id} className="flex justify-start">
+                        <div className="max-w-[80%] px-3 py-2 rounded-lg bg-zinc-800 text-sm">
+                          <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
+                          <p className="whitespace-pre-wrap break-words">Items: {order.items.join(', ')}</p>
+                          <span className="px-2 py-1 rounded text-xs text-white bg-amber-400">{order.status.toUpperCase()}</span>
+                          <p className="text-[10px] text-muted-foreground mt-1 text-right">{new Date(order.created_at).toLocaleString()}</p>
+                        </div>
                       </div>
                     ))
                   )}
