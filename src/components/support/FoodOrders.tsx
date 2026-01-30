@@ -1,53 +1,74 @@
-<TabsContent value="orders" className="flex-1 flex flex-col m-0 p-0 bg-black/95">
-  <div className="flex-1 flex flex-col p-4 gap-2">
-    {/* Big CCTV-style textarea */}
+<TabsContent
+  value="orders"
+  className="h-full w-full bg-black/95 flex flex-col"
+>
+  {/* TOP: CCTV MONITOR */}
+  <div className="h-[55%] p-4">
     <textarea
-      placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
+      placeholder="TYPE ORDER — ITEMS SEPARATED BY COMMAS"
       value={newOrderText}
       onChange={(e) => setNewOrderText(e.target.value)}
-      className="flex-1 w-full px-4 py-3 text-white bg-black/90 border-2 border-primary rounded-lg resize-none font-mono text-sm placeholder:text-green-400 shadow-[0_0_20px_rgba(0,255,0,0.7)] focus:outline-none focus:ring-2 focus:ring-green-400"
+      className="
+        w-full h-full
+        px-6 py-4
+        bg-black
+        text-green-400
+        font-mono text-lg tracking-wide
+        border-2 border-green-500/60
+        rounded-lg
+        resize-none
+        outline-none
+        placeholder:text-green-600
+        shadow-[inset_0_0_25px_rgba(0,255,0,0.35),0_0_30px_rgba(0,255,0,0.25)]
+      "
     />
+  </div>
 
-    {/* Add Order button */}
+  {/* BUTTON BAR */}
+  <div className="px-4 pb-2">
     <button
       onClick={addManualOrder}
-      className="px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition w-full mt-2"
+      className="
+        w-full py-2
+        bg-green-600/80
+        text-black font-mono text-sm tracking-widest
+        rounded
+        hover:bg-green-500
+        transition
+        shadow-[0_0_15px_rgba(0,255,0,0.4)]
+      "
     >
-      Add Order
+      CONFIRM ORDER
     </button>
+  </div>
 
-    {/* Orders displayed like CCTV panels */}
-    <div className="flex-1 grid grid-cols-2 gap-3 mt-2">
-      {orders.length === 0 ? (
-        <div className="col-span-2 flex items-center justify-center text-sm text-green-400 font-mono bg-zinc-900 rounded-lg shadow-[0_0_10px_rgba(0,255,0,0.5)] p-4">
-          No orders yet. Type your order above and click "Add Order".
-        </div>
-      ) : (
-        orders.map((order) => (
-          <div
-            key={order.id}
-            className="p-3 border border-primary/40 rounded-lg bg-zinc-900 shadow-[0_0_10px_rgba(0,255,0,0.5)] flex flex-col justify-between"
-          >
-            <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
-            <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-            <span
-              className={`px-2 py-1 rounded text-xs text-white ${
-                order.status === 'pending'
-                  ? 'bg-amber-400'
-                  : order.status === 'preparing'
-                  ? 'bg-blue-400'
-                  : 'bg-green-500'
-              }`}
-            >
-              {order.status.toUpperCase()}
-            </span>
-            <p className="text-[10px] text-green-400 mt-1 text-right">
-              {new Date(order.created_at).toLocaleString()}
-            </p>
+  {/* BOTTOM: CCTV PANELS */}
+  <div className="h-[35%] px-4 pb-4 grid grid-cols-2 gap-3">
+    {orders.length === 0 ? (
+      <div className="col-span-2 flex items-center justify-center font-mono text-green-500 text-sm border border-green-500/40 rounded bg-black shadow-[0_0_20px_rgba(0,255,0,0.3)]">
+        NO ACTIVE ORDERS
+      </div>
+    ) : (
+      orders.map((order) => (
+        <div
+          key={order.id}
+          className="
+            p-3
+            bg-black
+            border border-green-500/40
+            rounded
+            font-mono text-xs text-green-400
+            shadow-[inset_0_0_15px_rgba(0,255,0,0.25)]
+          "
+        >
+          <div className="opacity-70 mb-1">ORDER #{order.id.slice(0, 6)}</div>
+          <div className="text-sm mb-2">{order.items.join(', ')}</div>
+          <div className="text-[10px] uppercase tracking-widest">
+            STATUS: {order.status}
           </div>
-        ))
-      )}
-    </div>
+        </div>
+      ))
+    )}
   </div>
 </TabsContent>
 
