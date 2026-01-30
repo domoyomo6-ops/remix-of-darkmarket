@@ -28,32 +28,27 @@ const GiftCards = lazy(() => import("./pages/GiftCards"));
 const Transactions = lazy(() => import("./pages/Transactions"));
 
 // Loading fallback component
-const RouteLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
+const RouteLoader = () => <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-  </div>
-);
-
+  </div>;
 const queryClient = new QueryClient();
-
 function AppRoutes() {
-  const { user, loading } = useAuth();
+  const {
+    user,
+    loading
+  } = useAuth();
   const [hasSeenAnnouncements, setHasSeenAnnouncements] = useState(() => {
     return sessionStorage.getItem('announcements_seen') === 'true';
   });
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
+      </div>;
   }
 
   // Allow unauthenticated users to access /auth route for invites
   if (!user) {
-    return (
-      <ChunkErrorBoundary>
+    return <ChunkErrorBoundary>
         <Suspense fallback={<RouteLoader />}>
           <Routes>
             <Route path="/auth" element={<Auth />} />
@@ -61,23 +56,18 @@ function AppRoutes() {
             <Route path="*" element={<SiteGate />} />
           </Routes>
         </Suspense>
-      </ChunkErrorBoundary>
-    );
+      </ChunkErrorBoundary>;
   }
 
   // Show announcements if user hasn't seen them this session
   if (!hasSeenAnnouncements) {
-    return (
-      <ChunkErrorBoundary>
+    return <ChunkErrorBoundary>
         <Suspense fallback={<RouteLoader />}>
           <Announcements onContinue={() => setHasSeenAnnouncements(true)} />
         </Suspense>
-      </ChunkErrorBoundary>
-    );
+      </ChunkErrorBoundary>;
   }
-
-  return (
-    <ChunkErrorBoundary>
+  return <ChunkErrorBoundary>
       <Suspense fallback={<RouteLoader />}>
         <Routes>
           <Route path="/" element={<Homepage />} />
@@ -99,14 +89,11 @@ function AppRoutes() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-    </ChunkErrorBoundary>
-  );
+    </ChunkErrorBoundary>;
 }
-
 function AppContent() {
   const [showBoot, setShowBoot] = useState(true);
   const [hasBooted, setHasBooted] = useState(false);
-
   useEffect(() => {
     // Check if we've already shown boot screen this session
     const booted = sessionStorage.getItem('hell5tar_booted');
@@ -115,25 +102,19 @@ function AppContent() {
       setHasBooted(true);
     }
   }, []);
-
   const handleBootComplete = () => {
     setShowBoot(false);
     setHasBooted(true);
     sessionStorage.setItem('hell5tar_booted', 'true');
   };
-
-  return (
-    <>
+  return <>
       {showBoot && !hasBooted && <BootScreen onComplete={handleBootComplete} />}
-      <div className={showBoot && !hasBooted ? 'opacity-0' : 'opacity-100 transition-opacity duration-500'}>
+      <div className="">
         <AppRoutes />
       </div>
-    </>
-  );
+    </>;
 }
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -143,7 +124,5 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
-);
-
+  </QueryClientProvider>;
 export default App;
