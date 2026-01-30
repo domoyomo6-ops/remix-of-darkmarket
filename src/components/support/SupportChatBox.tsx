@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import CryptoExchange from './CryptoExchange';
+import FoodOrders from './FoodOrders'; // Manual creation only
 
 interface Message {
   id: string;
@@ -29,14 +30,6 @@ interface Chat {
   created_at: string;
 }
 
-interface Order {
-  id: string;
-  user_id: string;
-  status: 'pending' | 'preparing' | 'delivered';
-  items: string[];
-  created_at: string;
-}
-
 export default function SupportChatBox() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -48,15 +41,12 @@ export default function SupportChatBox() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
       checkExistingChat();
       fetchSupportStatus();
-      initOrders();
     }
   }, [user]);
 
@@ -79,6 +69,7 @@ export default function SupportChatBox() {
         }
       )
       .subscribe();
+
     return () => supabase.removeChannel(channel);
   }, [chat, isOpen, isMinimized]);
 
@@ -154,56 +145,10 @@ export default function SupportChatBox() {
   const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const statusColors = { open: 'bg-green-500', closed: 'bg-red-500', busy: 'bg-amber-500' };
 
-  /** ================== ORDERS LOGIC ================== **/
-  const initOrders = async () => {
-    setLoadingOrders(true);
-    try {
-      // Create table if not exists
-      await supabase.rpc('create_food_orders_table_if_not_exists');
-    } catch (err) {
-      console.error('Failed to create orders table:', err);
-    }
-    fetchOrders();
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('food_orders')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setOrders(data as Order[]);
-    } catch (err) {
-      console.error('Failed to fetch orders:', err);
-    }
-    setLoadingOrders(false);
-  };
-
-  const createTestOrder = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('food_orders')
-        .insert({
-          user_id: user?.id,
-          items: ['Pizza', 'Soda'],
-          status: 'pending',
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      setOrders(prev => [data as Order, ...prev]);
-    } catch (err) {
-      console.error('Failed to create test order:', err);
-    }
-  };
-
   if (!user) return null;
 
   return (
     <>
-      {/* Floating Button */}
       <button
         onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
         className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg 
@@ -219,11 +164,9 @@ export default function SupportChatBox() {
         )}
       </button>
 
-      {/* Chat Box */}
       {isOpen && (
         <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[400px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
           ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
@@ -242,18 +185,11 @@ export default function SupportChatBox() {
           {!isMinimized && (
             <Tabs defaultValue="chat" className="h-[calc(100%-48px)] flex flex-col">
               <TabsList className="flex shrink-0 bg-black/50 border-b border-primary/20">
-                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">
-                  💬 Chat {unreadCount > 0 && (
-                    <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs">
-                  <Bitcoin className="w-3 h-3 mr-1" /> Exchange
-                </TabsTrigger>
+                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">💬 Chat {unreadCount > 0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}</TabsTrigger>
+                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
 
-              {/* Chat Content */}
               <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
                 {supportStatus === 'closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
                 {supportStatus === 'busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
@@ -266,7 +202,7 @@ export default function SupportChatBox() {
                       <p className="text-xs mt-1">We typically reply within minutes</p>
                     </div>
                   ) : (
-                    messages.map(msg => (
+                    messages.map((msg) => (
                       <div key={msg.id} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-primary/20 text-primary' : msg.sender_type === 'telegram' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-foreground'}`}>
                           {msg.sender_type !== 'user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}</p>}
@@ -284,8 +220,8 @@ export default function SupportChatBox() {
                   <div className="flex gap-2">
                     <Input
                       value={newMessage}
-                      onChange={e => setNewMessage(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                       placeholder="Type a message..."
                       className="flex-1 bg-black/50 border-primary/30 text-sm"
                       disabled={supportStatus === 'closed'}
@@ -297,45 +233,11 @@ export default function SupportChatBox() {
                 </div>
               </TabsContent>
 
-              {/* Exchange Content */}
-              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto">
-                <CryptoExchange />
-              </TabsContent>
-
-              {/* Orders Content */}
+              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
+              
+              {/* Orders Tab — Manual only */}
               <TabsContent value="orders" className="flex-1 m-0 p-0 overflow-y-auto">
-                {loadingOrders ? (
-                  <p className="p-4 text-sm text-muted-foreground">Loading orders...</p>
-                ) : orders.length === 0 ? (
-                  <div className="p-4 text-sm text-muted-foreground">
-                    No orders found.
-                    <button
-                      onClick={createTestOrder}
-                      className="ml-2 px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary/80"
-                    >
-                      Create Test Order
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col p-4 space-y-3">
-                    {orders.map(order => (
-                      <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800">
-                        <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
-                        <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-                        <span className={`px-2 py-1 rounded text-xs text-white ${order.status === 'pending' ? 'bg-amber-400' : order.status === 'preparing' ? 'bg-blue-400' : 'bg-green-500'}`}>
-                          {order.status.toUpperCase()}
-                        </span>
-                        <p className="text-[10px] text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString()}</p>
-                      </div>
-                    ))}
-                    <button
-                      onClick={createTestOrder}
-                      className="mt-2 px-3 py-1 text-sm bg-primary text-white rounded hover:bg-primary/80"
-                    >
-                      Create Test Order
-                    </button>
-                  </div>
-                )}
+                <FoodOrders userId={user.id} />
               </TabsContent>
             </Tabs>
           )}
@@ -344,5 +246,6 @@ export default function SupportChatBox() {
     </>
   );
 }
+
 
 
