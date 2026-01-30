@@ -38,6 +38,9 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const [hasSeenAnnouncements, setHasSeenAnnouncements] = useState(() => {
+    return sessionStorage.getItem('announcements_seen') === 'true';
+  });
 
   if (loading) {
     return (
@@ -62,13 +65,12 @@ function AppRoutes() {
     );
   }
 
-  // Check if user has seen announcements this session
-  const hasSeenAnnouncements = sessionStorage.getItem('announcements_seen');
+  // Show announcements if user hasn't seen them this session
   if (!hasSeenAnnouncements) {
     return (
       <ChunkErrorBoundary>
         <Suspense fallback={<RouteLoader />}>
-          <Announcements />
+          <Announcements onContinue={() => setHasSeenAnnouncements(true)} />
         </Suspense>
       </ChunkErrorBoundary>
     );

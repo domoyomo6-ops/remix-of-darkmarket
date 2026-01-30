@@ -21,7 +21,11 @@ const typeConfig = {
   info: { icon: Info, color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' },
 };
 
-export default function Announcements() {
+interface AnnouncementsProps {
+  onContinue?: () => void;
+}
+
+export default function Announcements({ onContinue }: AnnouncementsProps) {
   const navigate = useNavigate();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +56,13 @@ export default function Announcements() {
   const handleContinue = () => {
     // Mark announcements as seen in session
     sessionStorage.setItem('announcements_seen', 'true');
-    // Navigate to homepage (now the root path)
-    window.location.href = '/';
+    // Call the callback if provided (for state-based navigation)
+    if (onContinue) {
+      onContinue();
+    } else {
+      // Fallback to navigation
+      navigate('/', { replace: true });
+    }
   };
 
   if (loading) {
