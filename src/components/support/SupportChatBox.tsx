@@ -43,18 +43,14 @@ export default function SupportChatBox() {
   const [chat, setChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
-
-  // Orders manual
   const [orders, setOrders] = useState<Order[]>([]);
   const [newOrderText, setNewOrderText] = useState('');
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch chat and support status
+  // Fetch chat + support status
   useEffect(() => {
     if (user) {
       checkExistingChat();
@@ -62,6 +58,7 @@ export default function SupportChatBox() {
     }
   }, [user]);
 
+  // Real-time messages
   useEffect(() => {
     if (!chat) return;
     const channel = supabase
@@ -130,12 +127,9 @@ export default function SupportChatBox() {
 
   const sendMessage = async () => {
     if (!user || !newMessage.trim()) return;
-    setSending(true);
     let currentChat = chat;
-    if (!currentChat) {
-      currentChat = await createChat();
-      if (!currentChat) return setSending(false);
-    }
+    if (!currentChat) currentChat = await createChat();
+    if (!currentChat) return;
     const { error } = await supabase.from('support_messages').insert({
       chat_id: currentChat.id,
       sender_id: user.id,
@@ -144,25 +138,17 @@ export default function SupportChatBox() {
     });
     if (error) toast.error('Failed to send message');
     else setNewMessage(''), setUnreadCount(0), setHasNewMessage(false);
-    setSending(false);
-  };
-
-  const markAsRead = async () => {
-    if (!chat) return;
-    await supabase.from('support_messages').update({ is_read: true }).eq('chat_id', chat.id).eq('is_read', false);
-    setUnreadCount(0);
-    setHasNewMessage(false);
   };
 
   const addManualOrder = () => {
     if (!newOrderText.trim()) return;
     const newOrder: Order = {
-      id: `${Date.now()}`,
-      items: newOrderText.split(',').map(item => item.trim()),
+      id: String(Date.now()),
+      items: newOrderText.split(',').map(i => i.trim()),
       status: 'pending',
       created_at: new Date().toISOString(),
     };
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders([newOrder, ...orders]);
     setNewOrderText('');
   };
 
@@ -173,138 +159,104 @@ export default function SupportChatBox() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating button */}
       <button
-        onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
-        className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg 
-          hover:scale-110 transition-all duration-300 flex items-center justify-center
-          ${hasNewMessage ? 'animate-bounce' : ''} 
-          ${isOpen && !isMinimized ? 'hidden' : ''}`}
+        onClick={() => { setIsOpen(true); setIsMinimized(false); }}
+        className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-110 transition flex items-center justify-center ${hasNewMessage ? 'animate-bounce' : ''} ${isOpen && !isMinimized ? 'hidden' : ''}`}
       >
         {hasNewMessage ? <BellRing className="w-6 h-6 animate-pulse" /> : <MessageCircle className="w-6 h-6" />}
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold animate-pulse">
-            {unreadCount}
-          </span>
-        )}
+        {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">{unreadCount}</span>}
       </button>
 
-      {/* Support Box */}
+      {/* Terminal */}
       {isOpen && (
-        <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[600px] lg:w-[700px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
-          ${isMinimized ? 'h-12' : 'h-[600px]'}`}>
-          
+        <div className={`fixed bottom-4 right-4 z-50 w-[480px] sm:w-[600px] h-[550px] bg-black/95 border border-primary/50 rounded-xl shadow-2xl overflow-hidden flex flex-col`}>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
+          <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-primary/50">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
-              <span className="font-mono text-primary text-sm">SUPPORT TERMINAL</span>
+              <span className="font-mono text-green-400 text-sm">SUPPORT TERMINAL</span>
             </div>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-white/10 text-zinc-400 hover:text-white">
+            <div className="flex gap-2">
+              <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 rounded hover:bg-white/10 text-green-400">
                 {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/20 text-zinc-400 hover:text-red-400">
+              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded hover:bg-red-500/20 text-red-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Tabs */}
           {!isMinimized && (
-            <Tabs defaultValue="chat" className="h-[calc(100%-48px)] flex flex-col">
-              <TabsList className="flex shrink-0 bg-black/50 border-b border-primary/20">
-                <TabsTrigger value="chat" className="flex-1 font-mono text-xs">💬 Chat {unreadCount>0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}</TabsTrigger>
-                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1"/> Exchange</TabsTrigger>
-                <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
+            <Tabs defaultValue="chat" className="flex-1 flex flex-col">
+              <TabsList className="flex bg-black/90 border-b border-primary/50">
+                <TabsTrigger value="chat" className="flex-1 font-mono text-xs text-green-400">💬 Chat</TabsTrigger>
+                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs text-green-400"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
+                <TabsTrigger value="orders" className="flex-1 font-mono text-xs text-green-400">🍔 Orders</TabsTrigger>
               </TabsList>
 
-              {/* Chat Tab */}
-              <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
-                {supportStatus==='closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
-                {supportStatus==='busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {messages.length===0 ? (
-                    <p className="text-sm text-muted-foreground text-center mt-4">No messages yet.</p>
+              {/* CHAT */}
+              <TabsContent value="chat" className="flex-1 flex flex-col p-4 bg-black/90">
+                <div className="flex-1 flex flex-col justify-end gap-2">
+                  {messages.length === 0 ? (
+                    <p className="text-sm text-green-400 font-mono text-center flex-1 flex items-center justify-center">No messages yet</p>
                   ) : messages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.sender_type==='user'?'justify-end':'justify-start'}`}>
-                      <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type==='user'?'bg-primary/20 text-primary':msg.sender_type==='telegram'?'bg-blue-500/20 text-blue-400':'bg-zinc-800 text-foreground'}`}>
-                        {msg.sender_type!=='user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type==='telegram'?'📱 Telegram':'👤 Admin'}</p>}
-                        <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                        {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full"/>}
-                        <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
+                    <div key={msg.id} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type === 'user' ? 'bg-green-900 text-green-400' : 'bg-zinc-900 text-white'}`}>
+                        {msg.sender_type !== 'user' && <p className="text-[10px] text-green-400 mb-1">{msg.sender_type === 'telegram' ? '📱 Telegram' : '👤 Admin'}</p>}
+                        <p className="whitespace-pre-wrap break-words font-mono">{msg.message}</p>
+                        <p className="text-[10px] text-green-400 mt-1 text-right">{formatTime(msg.created_at)}</p>
                       </div>
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
 
-                <div className="shrink-0 flex gap-2 p-3 border-t border-primary/20 bg-zinc-900">
-                  <Input value={newMessage} onChange={e=>setNewMessage(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendMessage()} placeholder="Type a message..." className="flex-1 bg-black/50 border-primary/30 text-sm"/>
-                  <Button onClick={sendMessage} disabled={!newMessage.trim()} size="sm"><Send className="w-4 h-4"/></Button>
+                {/* Input */}
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                    placeholder="Type message..."
+                    className="flex-1 bg-black/50 border border-green-700 text-green-400 font-mono text-sm"
+                  />
+                  <Button onClick={sendMessage} className="px-3 py-2 bg-green-700 hover:bg-green-600 text-white font-mono text-sm">
+                    <Send className="w-4 h-4" />
+                  </Button>
                 </div>
               </TabsContent>
 
-              {/* Exchange Tab */}
-              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
+              {/* EXCHANGE */}
+              <TabsContent value="exchange" className="flex-1 p-4 bg-black/90">
+                <CryptoExchange />
+              </TabsContent>
 
-              {/* Orders Tab - CCTV TV style */}
-              <TabsContent value="orders" className="flex-1 flex flex-col p-4 bg-black/95 space-y-2">
-                {/* TV panel */}
+              {/* ORDERS */}
+              <TabsContent value="orders" className="flex-1 flex flex-col p-4 bg-black/90">
                 <textarea
-                  placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
+                  placeholder="Type full order here (items separated by commas)"
                   value={newOrderText}
-                  onChange={e=>setNewOrderText(e.target.value)}
-                  className="flex-[2] w-full h-[200px] resize-none px-3 py-2 rounded border border-primary/30 bg-black text-white placeholder:text-muted-foreground font-mono text-lg"
+                  onChange={(e) => setNewOrderText(e.target.value)}
+                  className="w-full h-[200px] resize-none px-3 py-2 rounded border border-green-700 bg-black text-green-400 font-mono text-lg"
                 />
-                <Button onClick={addManualOrder} className="w-full px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition">
-                  Add Order
-                </Button>
+                <Button onClick={addManualOrder} className="w-full mt-2 px-3 py-2 bg-green-700 hover:bg-green-600 text-white font-mono text-sm">Add Order</Button>
 
-                {/* Orders list */}
-                <div className="flex-[3] flex flex-col mt-2 gap-2">
-                  {orders.length===0 ? (
-                    <p className="text-sm text-muted-foreground text-center mt-4 flex-1 flex items-center justify-center">No orders yet. Type your order above and click "Add Order".</p>
-                  ) : orders.map(order=>(
-                    <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800 flex-shrink-0">
+                <div className="flex-1 flex flex-col gap-2 mt-2">
+                  {orders.length === 0 ? (
+                    <p className="text-green-400 font-mono text-sm flex-1 flex items-center justify-center">No orders yet.</p>
+                  ) : orders.map(order => (
+                    <div key={order.id} className="p-3 border border-green-700 rounded-lg bg-zinc-900 flex-shrink-0">
                       <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
                       <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-                      <span className={`px-2 py-1 rounded text-xs text-white ${order.status==='pending'?'bg-amber-400':order.status==='preparing'?'bg-blue-400':'bg-green-500'}`}>
+                      <span className={`px-2 py-1 rounded text-xs text-white ${order.status === 'pending' ? 'bg-amber-400' : order.status === 'preparing' ? 'bg-blue-400' : 'bg-green-500'}`}>
                         {order.status.toUpperCase()}
                       </span>
-                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString()}</p>
+                      <p className="text-[10px] text-green-400 mt-1">{new Date(order.created_at).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
-
-                {/* Chat below TV */}
-                <div className="flex-[1] flex flex-col mt-4 border-t border-primary/20 pt-2">
-                  <div className="flex-1 flex flex-col space-y-2 overflow-y-auto">
-                    {messages.length===0 ? (
-                      <p className="text-sm text-muted-foreground text-center mt-4 flex-1 flex items-center justify-center">
-                        No messages yet.
-                      </p>
-                    ) : messages.map(msg => (
-                      <div key={msg.id} className={`flex ${msg.sender_type==='user'?'justify-end':'justify-start'}`}>
-                        <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type==='user'?'bg-primary/20 text-primary':msg.sender_type==='telegram'?'bg-blue-500/20 text-blue-400':'bg-zinc-800 text-foreground'}`}>
-                          {msg.sender_type!=='user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type==='telegram'?'📱 Telegram':'👤 Admin'}</p>}
-                          <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                          {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full"/>}
-                          <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  <div className="shrink-0 flex gap-2 mt-2">
-                    <Input value={newMessage} onChange={e=>setNewMessage(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendMessage()} placeholder="Type a message..." className="flex-1 bg-black/50 border-primary/30 text-sm"/>
-                    <Button onClick={sendMessage} disabled={!newMessage.trim()} size="sm"><Send className="w-4 h-4"/></Button>
-                  </div>
-                </div>
               </TabsContent>
-
             </Tabs>
           )}
         </div>
