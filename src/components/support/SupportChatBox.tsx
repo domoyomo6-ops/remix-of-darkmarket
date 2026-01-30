@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import CryptoExchange from './CryptoExchange';
-import FoodOrders from './FoodOrders';
 
 interface Message {
   id: string;
@@ -30,6 +29,13 @@ interface Chat {
   created_at: string;
 }
 
+interface Order {
+  id: string;
+  items: string[];
+  status: 'pending' | 'preparing' | 'delivered';
+  created_at: string;
+}
+
 export default function SupportChatBox() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -41,11 +47,14 @@ export default function SupportChatBox() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [orders, setOrders] = useState<{id:string, items:string[], status:'pending'|'preparing'|'delivered', created_at:string}[]>([]);
+  // Orders manual
+  const [orders, setOrders] = useState<Order[]>([]);
   const [newOrderText, setNewOrderText] = useState('');
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch chat and support status
   useEffect(() => {
     if (user) {
       checkExistingChat();
@@ -147,14 +156,13 @@ export default function SupportChatBox() {
 
   const addManualOrder = () => {
     if (!newOrderText.trim()) return;
-    const items = newOrderText.split(',').map(i => i.trim());
-    const order = {
-      id: (Math.random()*1000000).toFixed(0),
-      items,
-      status: 'pending' as const,
-      created_at: new Date().toISOString()
+    const newOrder: Order = {
+      id: `${Date.now()}`,
+      items: newOrderText.split(',').map(item => item.trim()),
+      status: 'pending',
+      created_at: new Date().toISOString(),
     };
-    setOrders(prev => [...prev, order]);
+    setOrders(prev => [newOrder, ...prev]);
     setNewOrderText('');
   };
 
@@ -165,6 +173,7 @@ export default function SupportChatBox() {
 
   return (
     <>
+      {/* Floating Button */}
       <button
         onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
         className={`fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg 
@@ -180,9 +189,12 @@ export default function SupportChatBox() {
         )}
       </button>
 
+      {/* Support Box */}
       {isOpen && (
-        <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[500px] h-[500px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
-          ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
+        <div className={`fixed bottom-4 right-4 z-50 w-[360px] sm:w-[600px] lg:w-[700px] bg-zinc-900 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 overflow-hidden transition-all duration-300
+          ${isMinimized ? 'h-12' : 'h-[600px]'}`}>
+          
+          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
@@ -198,88 +210,101 @@ export default function SupportChatBox() {
             </div>
           </div>
 
+          {/* Tabs */}
           {!isMinimized && (
-            <Tabs defaultValue="chat" className="flex flex-col h-[calc(100%-48px)]">
+            <Tabs defaultValue="chat" className="h-[calc(100%-48px)] flex flex-col">
               <TabsList className="flex shrink-0 bg-black/50 border-b border-primary/20">
                 <TabsTrigger value="chat" className="flex-1 font-mono text-xs">💬 Chat {unreadCount>0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}</TabsTrigger>
-                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
+                <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1"/> Exchange</TabsTrigger>
                 <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
               </TabsList>
 
               {/* Chat Tab */}
-              <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0">
-                <div className="flex-1 flex flex-col p-4 space-y-3">
-                  {supportStatus==='closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is closed</div>}
-                  {supportStatus==='busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
+              <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0 overflow-hidden">
+                {supportStatus==='closed' && <div className="px-4 py-2 bg-red-500/20 text-red-400 text-xs font-mono text-center">Support is currently closed</div>}
+                {supportStatus==='busy' && <div className="px-4 py-2 bg-amber-500/20 text-amber-400 text-xs font-mono text-center">High volume - expect delays</div>}
 
-                  <div className="flex-1 flex flex-col space-y-3">
-                    {messages.length===0 ? (
-                      <p className="text-sm text-muted-foreground text-center mt-4 flex-1 flex items-center justify-center">No messages yet</p>
-                    ) : (
-                      messages.map(msg => (
-                        <div key={msg.id} className={`flex ${msg.sender_type==='user'?'justify-end':'justify-start'}`}>
-                          <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type==='user'?'bg-primary/20 text-primary':msg.sender_type==='telegram'?'bg-blue-500/20 text-blue-400':'bg-zinc-800 text-foreground'}`}>
-                            {msg.sender_type!=='user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type==='telegram'?'📱 Telegram':'👤 Admin'}</p>}
-                            <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                            {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full"/>}
-                            <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {messages.length===0 ? (
+                    <p className="text-sm text-muted-foreground text-center mt-4">No messages yet.</p>
+                  ) : messages.map(msg => (
+                    <div key={msg.id} className={`flex ${msg.sender_type==='user'?'justify-end':'justify-start'}`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type==='user'?'bg-primary/20 text-primary':msg.sender_type==='telegram'?'bg-blue-500/20 text-blue-400':'bg-zinc-800 text-foreground'}`}>
+                        {msg.sender_type!=='user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type==='telegram'?'📱 Telegram':'👤 Admin'}</p>}
+                        <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                        {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full"/>}
+                        <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
 
-                  <div className="shrink-0 p-3 border-t border-primary/20 bg-zinc-900 flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={e=>setNewMessage(e.target.value)}
-                      onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendMessage()}
-                      placeholder="Type a message..."
-                      className="flex-1 bg-black/50 border-primary/30 text-sm"
-                      disabled={supportStatus==='closed'}
-                    />
-                    <Button onClick={sendMessage} disabled={sending||!newMessage.trim()||supportStatus==='closed'} size="sm">
-                      {sending?<Loader2 className="w-4 h-4 animate-spin"/>:<Send className="w-4 h-4"/>}
-                    </Button>
-                  </div>
+                <div className="shrink-0 flex gap-2 p-3 border-t border-primary/20 bg-zinc-900">
+                  <Input value={newMessage} onChange={e=>setNewMessage(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendMessage()} placeholder="Type a message..." className="flex-1 bg-black/50 border-primary/30 text-sm"/>
+                  <Button onClick={sendMessage} disabled={!newMessage.trim()} size="sm"><Send className="w-4 h-4"/></Button>
                 </div>
               </TabsContent>
 
               {/* Exchange Tab */}
-              <TabsContent value="exchange" className="flex-1 flex flex-col m-0 p-0"><CryptoExchange /></TabsContent>
+              <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-y-auto"><CryptoExchange /></TabsContent>
 
-              {/* Orders Tab */}
-              <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4 bg-black/95">
+              {/* Orders Tab - CCTV TV style */}
+              <TabsContent value="orders" className="flex-1 flex flex-col p-4 bg-black/95 space-y-2">
+                {/* TV panel */}
                 <textarea
                   placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)"
                   value={newOrderText}
-                  onChange={(e)=>setNewOrderText(e.target.value)}
-                  className="w-full h-[30%] resize-none px-3 py-2 rounded border border-primary/30 bg-black text-sm text-white placeholder:text-muted-foreground font-mono"
+                  onChange={e=>setNewOrderText(e.target.value)}
+                  className="flex-[2] w-full h-[200px] resize-none px-3 py-2 rounded border border-primary/30 bg-black text-white placeholder:text-muted-foreground font-mono text-lg"
                 />
-                <Button onClick={addManualOrder} className="mt-2 w-full px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition">
+                <Button onClick={addManualOrder} className="w-full px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition">
                   Add Order
                 </Button>
 
-                <div className="flex-1 flex flex-col justify-start gap-2 mt-4">
+                {/* Orders list */}
+                <div className="flex-[3] flex flex-col mt-2 gap-2">
                   {orders.length===0 ? (
-                    <p className="text-sm text-muted-foreground text-center mt-4 flex-1 flex items-center justify-center">
-                      No orders yet. Type your order above and click "Add Order".
-                    </p>
-                  ) : (
-                    orders.map(order=>(
-                      <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800 flex-shrink-0">
-                        <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
-                        <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-                        <span className={`px-2 py-1 rounded text-xs text-white ${order.status==='pending'?'bg-amber-400':order.status==='preparing'?'bg-blue-400':'bg-green-500'}`}>
-                          {order.status.toUpperCase()}
-                        </span>
-                        <p className="text-[10px] text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground text-center mt-4 flex-1 flex items-center justify-center">No orders yet. Type your order above and click "Add Order".</p>
+                  ) : orders.map(order=>(
+                    <div key={order.id} className="p-3 border border-primary/20 rounded-lg bg-zinc-800 flex-shrink-0">
+                      <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
+                      <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
+                      <span className={`px-2 py-1 rounded text-xs text-white ${order.status==='pending'?'bg-amber-400':order.status==='preparing'?'bg-blue-400':'bg-green-500'}`}>
+                        {order.status.toUpperCase()}
+                      </span>
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Chat below TV */}
+                <div className="flex-[1] flex flex-col mt-4 border-t border-primary/20 pt-2">
+                  <div className="flex-1 flex flex-col space-y-2 overflow-y-auto">
+                    {messages.length===0 ? (
+                      <p className="text-sm text-muted-foreground text-center mt-4 flex-1 flex items-center justify-center">
+                        No messages yet.
+                      </p>
+                    ) : messages.map(msg => (
+                      <div key={msg.id} className={`flex ${msg.sender_type==='user'?'justify-end':'justify-start'}`}>
+                        <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${msg.sender_type==='user'?'bg-primary/20 text-primary':msg.sender_type==='telegram'?'bg-blue-500/20 text-blue-400':'bg-zinc-800 text-foreground'}`}>
+                          {msg.sender_type!=='user' && <p className="text-[10px] text-muted-foreground mb-1">{msg.sender_type==='telegram'?'📱 Telegram':'👤 Admin'}</p>}
+                          <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                          {msg.file_url && <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full"/>}
+                          <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.created_at)}</p>
+                        </div>
                       </div>
-                    ))
-                  )}
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  <div className="shrink-0 flex gap-2 mt-2">
+                    <Input value={newMessage} onChange={e=>setNewMessage(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendMessage()} placeholder="Type a message..." className="flex-1 bg-black/50 border-primary/30 text-sm"/>
+                    <Button onClick={sendMessage} disabled={!newMessage.trim()} size="sm"><Send className="w-4 h-4"/></Button>
+                  </div>
                 </div>
               </TabsContent>
+
             </Tabs>
           )}
         </div>
@@ -287,7 +312,6 @@ export default function SupportChatBox() {
     </>
   );
 }
-
 
 
 
