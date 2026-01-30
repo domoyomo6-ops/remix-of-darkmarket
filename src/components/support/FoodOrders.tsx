@@ -22,16 +22,17 @@ export default function FoodOrders({ userId }: Props) {
   }, [userId]);
 
   const fetchOrders = async () => {
-    const { data, error } = await supabase
-      .from('food_orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('food_orders')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Failed to fetch orders:', error);
-    } else {
+      if (error) throw error;
       setOrders(data as Order[]);
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
     }
     setLoading(false);
   };
