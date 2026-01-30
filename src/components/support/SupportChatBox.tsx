@@ -192,8 +192,8 @@ export default function SupportChatBox() {
       setIsOpen(true);
       setIsMinimized(false);
       markAsRead();
-    }} className="text-8xl border-8 text-justify font-extrabold pl-0 pt-0 pb-0 my-0">
-        {hasNewMessage ? <Users className="w-6 h-6 animate-pulse pl-0 border-8 border-none mx-[86px] my-[3px] px-[8px] py-0" /> : <MessageCircle className="w-6 h-6" />}
+    }} className="text-8xl border-8 font-extrabold pl-0 pt-0 pb-0 my-0 font-mono text-right">
+        {hasNewMessage ? <Users className="w-6 h-6 animate-pulse pl-0 border-8 border-none mx-[86px] my-[3px] px-[8px] py-0 mr-[113px] mb-[20px] mt-[4px]" /> : <MessageCircle className="w-6 h-6" />}
         {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold animate-pulse">
             {unreadCount}
           </span>}
@@ -203,7 +203,7 @@ export default function SupportChatBox() {
       transform: `translate(${position.x}px, ${position.y}px)`
     }} className={`fixed top-0 left-0 z-50 select-none w-[360px] sm:w-[400px] ${isMinimized ? 'h-12' : 'h-[500px]'}`}>
           {/* HEADER */}
-          <div onMouseDown={onMouseDown} className="cursor-move flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-primary/20">
+          <div onMouseDown={onMouseDown} className="cursor-move bg-zinc-800 border-b border-primary/20 py-0 px-[35px] items-center justify-between flex flex-row gap-[47px]">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
               <span className="font-mono text-primary text-sm">SUPPORT TERMINAL</span>
@@ -218,7 +218,7 @@ export default function SupportChatBox() {
             </div>
           </div>
 
-          {!isMinimized && <Tabs defaultValue="chat" className="h-[calc(100%-48px)] flex flex-col bg-black/95">
+          {!isMinimized && <Tabs defaultValue="chat" className="h-[calc(100%-48px)] bg-black/95 pr-0 pb-0 flex flex-col">
               <TabsList className="flex shrink-0 bg-black/50 border-b border-primary/20">
                 <TabsTrigger value="chat" className="flex-1 font-mono text-xs">
                   💬 Chat {unreadCount > 0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}
@@ -245,7 +245,7 @@ export default function SupportChatBox() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                <div className="shrink-0 p-3 border-t border-primary/20 bg-zinc-900">
+                <div className="shrink-0 p-3 border-t border-primary/20 bg-zinc-900 px-[31px] my-[172px] mx-px pb-[86px]">
                   <div className="flex gap-2">
                     <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Type a message..." className="flex-1 bg-black/50 border-primary/30 text-sm" />
                     <Button onClick={sendMessage} disabled={sending || !newMessage.trim()} size="sm" className="px-3">
@@ -260,7 +260,7 @@ export default function SupportChatBox() {
 
               {/* ORDERS */}
               <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4 gap-2 bg-black/95">
-                <textarea placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)" value={newOrderText} onChange={e => setNewOrderText(e.target.value)} className="flex-1 w-full px-4 py-3 text-white bg-black/90 border-2 border-primary rounded-lg resize-none font-mono text-sm placeholder:text-green-400 shadow-[0_0_20px_rgba(0,255,0,0.7)] focus:outline-none focus:ring-2 focus:ring-green-400" />
+                <textarea value={newOrderText} onChange={e => setNewOrderText(e.target.value)} className="flex-1 w-full text-white bg-black/90 border-2 border-primary rounded-lg resize-none font-mono text-sm placeholder:text-green-400 shadow-[0_0_20px_rgba(0,255,0,0.7)] focus:outline-none focus:ring-2 focus:ring-green-400 px-[53px] mb-0 mt-0 mr-0 ml-0 my-[18px] py-[65px] pr-[49px]" placeholder=" (e.g., Burger, Fries, Coke)" />
                 <button onClick={addManualOrder} className="px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition w-full mt-2">
                   Add Order
                 </button>
