@@ -16,25 +16,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-
-export default function Admin() {
-  const { user, isAdmin, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+ 
+const { user, isAdmin, loading: authLoading } = useAuth(); // ✅ HERE  const navigate = useNavigate();
   const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, revenue: 0 });
   const [loading, setLoading] = useState(true);
+   export default function Admin() {
+  
 
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
         navigate('/auth');
       } else if (!isAdmin) {
-        toast.error('ACCESS_DENIED: Admin clearance required');
         navigate('/');
       } else {
         fetchStats();
       }
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, authLoading]);
+
 
   const fetchStats = async () => {
     const [productsRes, ordersRes, usersRes] = await Promise.all([
