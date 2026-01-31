@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt } from 'lucide-react';
+import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt, FileText, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -43,6 +43,22 @@ export default function Header() {
         className={`${mobile ? 'block py-3 text-lg' : 'text-sm'} text-muted-foreground hover:text-primary transition-all duration-300 font-mono uppercase tracking-wide hover:terminal-glow`}
       >
         [STOCK]
+      </Link>
+      <Link 
+        to="/logz" 
+        onClick={onNavigate}
+        className={`${mobile ? 'block py-3 text-lg' : 'text-sm'} text-purple-400 hover:text-purple-300 transition-all duration-300 font-mono uppercase tracking-wide hover:terminal-glow flex items-center gap-2`}
+      >
+        <FileText className="w-4 h-4" />
+        [LOGZ]
+      </Link>
+      <Link 
+        to="/accounts" 
+        onClick={onNavigate}
+        className={`${mobile ? 'block py-3 text-lg' : 'text-sm'} text-emerald-400 hover:text-emerald-300 transition-all duration-300 font-mono uppercase tracking-wide hover:terminal-glow flex items-center gap-2`}
+      >
+        <UserCircle className="w-4 h-4" />
+        [ACCOUNTS]
       </Link>
       <Link 
         to="/lounge" 

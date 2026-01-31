@@ -19,6 +19,8 @@ const Install = lazy(() => import("./pages/Install"));
 const TopUpSuccess = lazy(() => import("./pages/TopUpSuccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Stock = lazy(() => import("./pages/Stock"));
+const Logz = lazy(() => import("./pages/Logz"));
+const Accounts = lazy(() => import("./pages/Accounts"));
 const Games = lazy(() => import("./pages/Games"));
 const Forum = lazy(() => import("./pages/Forum"));
 const Lounge = lazy(() => import("./pages/Lounge"));
@@ -81,6 +83,8 @@ function AppRoutes() {
           <Route path="/install" element={<Install />} />
           <Route path="/topup-success" element={<TopUpSuccess />} />
           <Route path="/stock" element={<Stock />} />
+          <Route path="/logz" element={<Logz />} />
+          <Route path="/accounts" element={<Accounts />} />
           <Route path="/games" element={<Games />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/lounge" element={<Lounge />} />
