@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, RotateCcw, ShoppingCart } from 'lucide-react';
+import { Loader2, RotateCcw, ShoppingCart, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,26 +10,21 @@ import MainLayout from '@/components/layout/MainLayout';
 
 interface Product {
   id: string;
-  bin: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  expire: string | null;
+  title: string;
+  short_description: string | null;
+  price: number;
   country: string | null;
-  card_type: string | null;
   brand: string | null;
   bank: string | null;
-  price: number;
-  short_description: string | null;
 }
 
-export default function Stock() {
+export default function Logz() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
-  const [bankFilter, setBankFilter] = useState<string>('all');
+  const [countryFilter, setCountryFilter] = useState<string>('all');
   const [cart, setCart] = useState<string[]>([]);
 
   useEffect(() => {
@@ -40,9 +35,9 @@ export default function Stock() {
     setLoading(true);
     const { data, error } = await supabase
       .from('products')
-      .select('id, bin, city, state, zip, expire, country, card_type, brand, bank, price, short_description')
+      .select('id, title, short_description, price, country, brand, bank')
       .eq('is_active', true)
-      .eq('product_type', 'stock')
+      .eq('product_type', 'logz')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -89,7 +84,7 @@ export default function Stock() {
     if (cart.length >= 100) {
       toast({
         title: "Cart full",
-        description: "Max 100 cards per cart.",
+        description: "Max 100 items per cart.",
         variant: "destructive",
       });
       return;
@@ -102,7 +97,7 @@ export default function Stock() {
     if (cart.length + available.length > 100) {
       toast({
         title: "Cart limit",
-        description: "Max 100 cards per cart.",
+        description: "Max 100 items per cart.",
         variant: "destructive",
       });
       return;
@@ -111,14 +106,14 @@ export default function Stock() {
   };
 
   const resetFilters = () => {
-    setBankFilter('all');
+    setCountryFilter('all');
     setCart([]);
   };
 
-  const uniqueBanks = [...new Set(products.map(p => p.bank).filter(Boolean))];
-  const filteredProducts = bankFilter === 'all' 
+  const uniqueCountries = [...new Set(products.map(p => p.country).filter(Boolean))];
+  const filteredProducts = countryFilter === 'all' 
     ? products 
-    : products.filter(p => p.bank === bankFilter);
+    : products.filter(p => p.country === countryFilter);
 
   if (loading) {
     return (
@@ -133,19 +128,25 @@ export default function Stock() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <FileText className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-mono font-bold text-primary terminal-glow">LOGZ://</h1>
+        </div>
+
         {/* Filters */}
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label className="text-xs text-muted-foreground mb-1 block">BANK</label>
-              <Select value={bankFilter} onValueChange={setBankFilter}>
+            <div className="flex-1 max-w-xs">
+              <label className="text-xs text-muted-foreground mb-1 block">COUNTRY</label>
+              <Select value={countryFilter} onValueChange={setCountryFilter}>
                 <SelectTrigger className="bg-card border-border">
-                  <SelectValue placeholder="All Banks" />
+                  <SelectValue placeholder="All Countries" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Banks</SelectItem>
-                  {uniqueBanks.map(bank => (
-                    <SelectItem key={bank} value={bank!}>{bank}</SelectItem>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {uniqueCountries.map(country => (
+                    <SelectItem key={country} value={country!}>{country}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -161,7 +162,7 @@ export default function Stock() {
             <Button variant="outline" size="sm" onClick={() => addMultiple(10)}>Add 10</Button>
             <Button variant="outline" size="sm" onClick={() => addMultiple(15)}>Add 15</Button>
             <Button variant="outline" size="sm" onClick={() => addMultiple(25)}>Add 25</Button>
-            <span className="text-xs text-muted-foreground ml-2">Max 100 cards per cart.</span>
+            <span className="text-xs text-muted-foreground ml-2">Max 100 items per cart.</span>
           </div>
         </div>
 
@@ -171,13 +172,9 @@ export default function Stock() {
             <table className="w-full text-sm">
               <thead className="bg-card border-b border-border">
                 <tr>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Bin</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">City</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">State</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Zip</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Expire</th>
+                  <th className="text-left p-3 text-muted-foreground font-medium">Title</th>
+                  <th className="text-left p-3 text-muted-foreground font-medium">Description</th>
                   <th className="text-left p-3 text-muted-foreground font-medium">Country</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Card Type</th>
                   <th className="text-left p-3 text-muted-foreground font-medium">Brand</th>
                   <th className="text-left p-3 text-muted-foreground font-medium">Bank</th>
                   <th className="text-right p-3 text-muted-foreground font-medium">Purchase</th>
@@ -189,13 +186,9 @@ export default function Stock() {
                     key={product.id} 
                     className={`border-b border-border/50 hover:bg-card/50 transition-colors ${idx % 2 === 0 ? 'bg-background' : 'bg-card/20'}`}
                   >
-                    <td className="p-3 font-mono text-foreground">{product.bin || '-'}</td>
-                    <td className="p-3 text-foreground">{product.city || '-'}</td>
-                    <td className="p-3 text-foreground">{product.state || '-'}</td>
-                    <td className="p-3 font-mono text-foreground">{product.zip || '-'}</td>
-                    <td className="p-3 font-mono text-foreground">{product.expire || '-'}</td>
+                    <td className="p-3 font-mono text-foreground">{product.title}</td>
+                    <td className="p-3 text-foreground">{product.short_description || '-'}</td>
                     <td className="p-3 text-foreground">{product.country || '-'}</td>
-                    <td className="p-3 text-foreground">{product.card_type || '-'}</td>
                     <td className="p-3 text-foreground">{product.brand || '-'}</td>
                     <td className="p-3 text-foreground">{product.bank || '-'}</td>
                     <td className="p-3 text-right">
@@ -206,14 +199,14 @@ export default function Stock() {
                         <Button
                           size="sm"
                           variant="secondary"
-                          className="bg-amber-600 hover:bg-amber-700 text-white text-xs"
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
                           onClick={() => handlePurchase(product.id)}
                           disabled={purchasing === product.id}
                         >
                           {purchasing === product.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
-                            product.short_description || 'Buy'
+                            'Buy'
                           )}
                         </Button>
                       </div>
@@ -227,7 +220,7 @@ export default function Stock() {
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            No products available.
+            No logz available.
           </div>
         )}
 

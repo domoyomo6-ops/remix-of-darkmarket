@@ -18,6 +18,7 @@ interface Product {
   short_description: string | null;
   price: number;
   category: 'software' | 'courses' | 'templates' | 'assets';
+  product_type: 'stock' | 'logz' | 'accounts';
   image_url: string | null;
   file_url: string | null;
   is_active: boolean;
@@ -44,6 +45,7 @@ export default function ProductManager() {
     short_description: '',
     price: 0,
     category: 'software' as 'software' | 'courses' | 'templates' | 'assets',
+    product_type: 'stock' as 'stock' | 'logz' | 'accounts',
     image_url: '',
     file_url: '',
     is_active: true,
@@ -73,7 +75,7 @@ export default function ProductManager() {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
     } else {
-      setProducts(data || []);
+      setProducts((data || []) as Product[]);
     }
     setLoading(false);
   };
@@ -85,6 +87,7 @@ export default function ProductManager() {
       short_description: '',
       price: 0,
       category: 'software',
+      product_type: 'stock',
       image_url: '',
       file_url: '',
       is_active: true,
@@ -110,6 +113,7 @@ export default function ProductManager() {
       short_description: product.short_description || '',
       price: product.price,
       category: product.category,
+      product_type: product.product_type || 'stock',
       image_url: product.image_url || '',
       file_url: product.file_url || '',
       is_active: product.is_active,
@@ -138,6 +142,7 @@ export default function ProductManager() {
       short_description: formData.short_description.trim() || null,
       price: formData.price,
       category: formData.category,
+      product_type: formData.product_type,
       image_url: formData.image_url.trim() || null,
       file_url: formData.file_url.trim() || null,
       is_active: formData.is_active,
@@ -332,6 +337,25 @@ export default function ProductManager() {
                     <SelectItem value="courses">COURSES</SelectItem>
                     <SelectItem value="templates">TEMPLATES</SelectItem>
                     <SelectItem value="assets">ASSETS</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="font-mono text-xs text-muted-foreground">PRODUCT TYPE</Label>
+                <Select 
+                  value={formData.product_type} 
+                  onValueChange={(value: 'stock' | 'logz' | 'accounts') => 
+                    setFormData({ ...formData, product_type: value })
+                  }
+                >
+                  <SelectTrigger className="crt-input mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stock">STOCK (Cards/BINs)</SelectItem>
+                    <SelectItem value="logz">LOGZ (Logs/Dumps)</SelectItem>
+                    <SelectItem value="accounts">ACCOUNTS (Logins)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
