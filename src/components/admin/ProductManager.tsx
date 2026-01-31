@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Package, Plus, Edit, Trash2, X, Check, Loader2, Image } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, X, Check, Loader2, Image, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -238,13 +239,25 @@ export default function ProductManager() {
             PRODUCTS_MANAGER://
           </h2>
         </div>
-        <Button 
-          className="crt-button w-full sm:w-auto"
-          onClick={() => setShowForm(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          [ NEW PRODUCT ]
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline"
+            className="flex-1 sm:flex-none"
+            asChild
+          >
+            <Link to="/stock">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              VIEW STOCK
+            </Link>
+          </Button>
+          <Button 
+            className="crt-button flex-1 sm:w-auto"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            [ NEW PRODUCT ]
+          </Button>
+        </div>
       </div>
 
       {/* Product Form */}
