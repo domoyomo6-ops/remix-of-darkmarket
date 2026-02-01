@@ -14,7 +14,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const SiteGate = lazy(() => import("./pages/SiteGate"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Orders = lazy(() => import("./pages/Orders"));
-const Admin = lazy(() => import("./pages/Admin"));
+const Admin = lazy(() => import("./pages/admin"));
 const Install = lazy(() => import("./pages/Install"));
 const TopUpSuccess = lazy(() => import("./pages/TopUpSuccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
