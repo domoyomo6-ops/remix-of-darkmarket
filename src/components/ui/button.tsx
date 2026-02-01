@@ -64,8 +64,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Auto-disable if max claims reached
     const isMaxedOut = maxClaims !== undefined && currentClaims !== undefined && currentClaims >= maxClaims;
 
-    // Disable for non-admins if admin-only
-    const shouldDisable = (isAdmin === false) || isLoading || disabled || isMaxedOut;
+    // Disable if loading, explicitly disabled, or max claims reached
+    // Note: isAdmin prop is for admin-only buttons, not for disabling all buttons
+    const shouldDisable = isLoading || disabled || isMaxedOut;
 
     return (
       <Comp
