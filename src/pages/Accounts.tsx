@@ -206,20 +206,28 @@ export default function Accounts() {
                   <img 
                     src={product.image_url} 
                     alt={product.title}
-                    className="max-w-[80%] max-h-[60%] object-contain"
+                    className="max-w-[80%] max-h-[60%] object-contain drop-shadow-lg"
+                    onError={(e) => {
+                      // Hide broken image and show text fallback
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'block';
+                    }}
                   />
-                ) : (
-                  <div className="text-center">
-                    <h3 className="text-white font-bold text-xl md:text-2xl lg:text-3xl drop-shadow-lg uppercase tracking-wide">
-                      {product.brand || product.title}
-                    </h3>
-                    {product.short_description && (
-                      <p className="text-white/80 text-xs mt-1 font-medium">
-                        {product.short_description}
-                      </p>
-                    )}
-                  </div>
-                )}
+                ) : null}
+                <div 
+                  className="text-center" 
+                  style={{ display: product.image_url ? 'none' : 'block' }}
+                >
+                  <h3 className="text-white font-bold text-xl md:text-2xl lg:text-3xl drop-shadow-lg uppercase tracking-wide">
+                    {product.brand || product.title}
+                  </h3>
+                  {product.short_description && (
+                    <p className="text-white/80 text-xs mt-1 font-medium">
+                      {product.short_description}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Hover Overlay */}
