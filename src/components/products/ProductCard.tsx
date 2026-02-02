@@ -172,7 +172,7 @@ export default function Accounts() {
         <div className="mb-6 flex flex-col md:flex-row gap-3 items-start">
           <input 
             type="text"
-            placeholder="Paste Imgur image URL here..."
+            placeholder="https://imgur.com/a/xqJkjGm"
             value={testImageUrl}
             onChange={e => setTestImageUrl(e.target.value)}
             className="border border-border rounded px-3 py-2 flex-1 bg-card text-white placeholder:text-muted-foreground"
