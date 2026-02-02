@@ -188,15 +188,20 @@ export default function SupportChatBox() {
   };
   if (!user) return null;
   return <>
-      <button onClick={() => {
-      setIsOpen(true);
-      setIsMinimized(false);
-      markAsRead();
-    }} className="border-8 pl-0 pt-0 pb-[21px] text-right mt-[4px] border-dotted my-0 mx-0 text-sm font-extralight mb-0 mr-0 pr-0">
-        {hasNewMessage ? <Users className="animate-pulse pl-0 border-8 my-[3px] py-0 px-[4px] mx-[142px] w-[239px] h-[57px] rounded-3xl shadow-terminal-lg border-double" /> : <MessageCircle className="w-6 h-6" />}
-        {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold animate-pulse">
+      <button 
+        onClick={() => {
+          setIsOpen(true);
+          setIsMinimized(false);
+          markAsRead();
+        }} 
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-all"
+      >
+        {hasNewMessage ? <Users className="w-6 h-6 animate-pulse" /> : <MessageCircle className="w-6 h-6" />}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold animate-pulse">
             {unreadCount}
-          </span>}
+          </span>
+        )}
       </button>
 
       {isOpen && <div ref={dragRef} style={{
