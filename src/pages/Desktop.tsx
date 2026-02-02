@@ -42,6 +42,7 @@ export default function Desktop() {
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [showStartMenu, setShowStartMenu] = useState(false);
 
+  // clock updater
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(interval);
@@ -54,17 +55,17 @@ export default function Desktop() {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 overflow-hidden select-none">
-      {/* Grid */}
+      {/* Grid background */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(34,197,94,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(34,197,94,0.04)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
-      {/* Desktop Icons */}
+      {/* Desktop icons */}
       <div className="absolute top-6 left-6 grid grid-cols-1 gap-6 z-10">
         {desktopIcons.map(icon => (
           <button
             key={icon.id}
             onClick={() => {
               setSelectedIcon(icon.id);
-              navigate(icon.route); // ✅ instant open
+              navigate(icon.route); // single-click navigation
             }}
             className={`
               flex flex-col items-center gap-2 p-3 rounded-lg
@@ -86,7 +87,7 @@ export default function Desktop() {
         ))}
       </div>
 
-      {/* Start Menu */}
+      {/* Start menu */}
       {showStartMenu && (
         <div className="absolute bottom-12 left-2 w-72 bg-zinc-900/95 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 z-50 animate-slide-up">
           <div className="p-3 border-b border-primary/20">
