@@ -48,27 +48,35 @@ export default function Desktop() {
   }, []);
 
   const startMenuItems = useMemo(
-    () => desktopIcons.map((icon) => ({
-      ...icon,
-      action: () => navigate(icon.route),
-    })),
+    () =>
+      desktopIcons.map(icon => ({
+        ...icon,
+        action: () => navigate(icon.route),
+      })),
     [navigate]
   );
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 overflow-hidden select-none">
+      {/* Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(34,197,94,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(34,197,94,0.04)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
+      {/* Desktop Icons */}
       <div className="absolute top-6 left-6 grid grid-cols-1 gap-6 z-10">
-        {desktopIcons.map((icon) => (
+        {desktopIcons.map(icon => (
           <button
             key={icon.id}
-            onClick={() => setSelectedIcon(icon.id)}
-            onDoubleClick={() => navigate(icon.route)}
-            className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 group
+            onClick={() => {
+              setSelectedIcon(icon.id);
+              navigate(icon.route); // ✅ RESTORED NAVIGATION
+            }}
+            className={`
+              flex flex-col items-center gap-2 p-3 rounded-lg
+              transition-all duration-200 group
               ${selectedIcon === icon.id
                 ? 'bg-primary/20 ring-1 ring-primary/50'
-                : 'hover:bg-white/5'}`}
+                : 'hover:bg-white/5'}
+            `}
           >
             <div className={`${icon.color} group-hover:scale-110 transition-transform drop-shadow-lg`}>
               {icon.icon}
@@ -80,6 +88,7 @@ export default function Desktop() {
         ))}
       </div>
 
+      {/* Start Menu */}
       {showStartMenu && (
         <div className="absolute bottom-12 left-2 w-72 bg-zinc-900/95 border border-primary/30 rounded-lg shadow-2xl shadow-primary/20 z-50 animate-slide-up">
           <div className="p-3 border-b border-primary/20">
@@ -95,7 +104,7 @@ export default function Desktop() {
           </div>
 
           <div className="p-2">
-            {startMenuItems.map((icon) => (
+            {startMenuItems.map(icon => (
               <button
                 key={icon.id}
                 onClick={() => {
@@ -112,6 +121,7 @@ export default function Desktop() {
         </div>
       )}
 
+      {/* Taskbar */}
       <div className="absolute bottom-0 left-0 right-0 h-11 bg-zinc-900/90 border-t border-primary/20 backdrop-blur-xl flex items-center justify-between px-2 z-40">
         <button
           onClick={() => setShowStartMenu(!showStartMenu)}
