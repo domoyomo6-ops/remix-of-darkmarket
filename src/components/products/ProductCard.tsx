@@ -1,77 +1,246 @@
-import { useNavigate } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Loader2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import MainLayout from '@/components/layout/MainLayout';
 
-interface ProductCardProps {
-  product: {
-    id: string;
-    title: string;
-    short_description: string | null;
-    price: number;
-    category: string;
-    image_url: string | null;
-  };
+interface Product {
+  id: string;
+  title: string;
+  short_description: string | null;
+  price: number;
+  country: string | null;
+  brand: string | null;
+  image_url: string | null;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
-  const navigate = useNavigate();
+// Brand color mapping
+const brandColors: Record<string, string> = {
+  'subway': 'bg-emerald-600',
+  'onlyfans': 'bg-sky-200',
+  'dollar general': 'bg-yellow-400',
+  'home depot': 'bg-orange-500',
+  'panda express': 'bg-red-600',
+  'steak n shake': 'bg-rose-800',
+  'panera': 'bg-olive-600',
+  'ihg': 'bg-orange-500',
+  'bloomingdales': 'bg-zinc-900',
+  'grubhub': 'bg-orange-500',
+  'perpay': 'bg-blue-600',
+  'bank': 'bg-blue-600',
+  'ulta': 'bg-orange-600',
+  'papa johns': 'bg-red-600',
+  'nike': 'bg-blue-600',
+  'macys': 'bg-white',
+  'netflix': 'bg-black',
+  'spotify': 'bg-green-500',
+  'amazon': 'bg-amber-400',
+  'walmart': 'bg-blue-600',
+  'target': 'bg-red-600',
+  'starbucks': 'bg-green-700',
+  'apple': 'bg-zinc-900',
+  'google': 'bg-white',
+  'facebook': 'bg-blue-600',
+  'instagram': 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400',
+  'twitter': 'bg-sky-500',
+  'paypal': 'bg-blue-700',
+  'venmo': 'bg-sky-400',
+  'cashapp': 'bg-green-500',
+};
+const fallbackColors = [
+  'bg-red-500','bg-blue-500','bg-green-500','bg-purple-500','bg-orange-500',
+  'bg-pink-500','bg-cyan-500','bg-amber-500','bg-indigo-500','bg-teal-500',
+];
+function getBrandColor(brand: string | null, index: number): string {
+  if (!brand) return fallbackColors[index % fallbackColors.length];
+  const key = brand.toLowerCase();
+  return brandColors[key] || fallbackColors[index % fallbackColors.length];
+}
+
+export default function Accounts() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [brandFilter, setBrandFilter] = useState<string>('all');
+
+  // NEW: Test Imgur image URL
+  const [testImageUrl, setTestImageUrl] = useState('');
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, title, short_description, price, country, brand, image_url')
+      .eq('is_active', true)
+      .eq('product_type', 'accounts')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+    } else {
+      setProducts(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handlePurchase = async (productId: string) => {
+    if (!user) return;
+    setPurchasing(productId);
+    try {
+      const { data, error } = await supabase.rpc('purchase_with_wallet', { p_product_id: productId });
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string };
+      if (result.success) {
+        toast({ title: "Purchase successful!", description: "Check your orders page for the download." });
+        fetchProducts();
+      } else throw new Error(result.error || 'Purchase failed');
+    } catch (error: any) {
+      toast({ title: "Purchase failed", description: error.message, variant: "destructive" });
+    } finally {
+      setPurchasing(null);
+    }
+  };
+
+  const uniqueBrands = [...new Set(products.map(p => p.brand).filter(Boolean))];
+  const filteredProducts = brandFilter === 'all' 
+    ? products 
+    : products.filter(p => p.brand === brandFilter);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <div
-      onClick={() => navigate(`/product/${product.id}`)}
-      className="group cursor-pointer card-3d panel-3d rounded-lg overflow-hidden"
-    >
-      {/* Image */}
-      <div className="aspect-video relative overflow-hidden bg-background">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.title}
-            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+    <MainLayout>
+      <div className="space-y-6">
+
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-mono font-bold text-primary terminal-glow">ACCOUNTS://</h1>
+          </div>
+
+          {/* Filter */}
+          <div className="w-48">
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger className="bg-card border-border">
+                <SelectValue placeholder="All Brands" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Brands</SelectItem>
+                {uniqueBrands.map(brand => (
+                  <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* NEW: Test Imgur URL Input */}
+        <div className="mb-6 flex flex-col md:flex-row gap-3 items-start">
+          <input 
+            type="text"
+            placeholder="https://imgur.com/a/ON2Z0SH"
+            value={testImageUrl}
+            onChange={e => setTestImageUrl(e.target.value)}
+            className="border border-border rounded px-3 py-2 flex-1 bg-card text-white placeholder:text-muted-foreground"
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-12 h-12 text-primary/30" />
+          <button
+            onClick={() => setTestImageUrl(testImageUrl)}
+            className="bg-primary text-white px-4 py-2 rounded hover:brightness-110"
+          >
+            Show Image
+          </button>
+        </div>
+
+        {/* Test Image Preview */}
+        {testImageUrl && (
+          <div className="relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer bg-black/40 flex items-center justify-center mb-6">
+            <img src={testImageUrl} alt="Test Imgur" className="max-w-[80%] max-h-[80%] object-contain" />
           </div>
         )}
-        
-        {/* Scanline overlay */}
-        <div className="absolute inset-0 pointer-events-none opacity-20 bg-[linear-gradient(rgba(0,255,150,0.1)_1px,transparent_1px)] bg-[size:100%_3px]" />
-        
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-        
-        {/* Holographic edge effect */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-          <div className="absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-          <div className="absolute inset-y-0 right-0 w-[2px] bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
+
+        {/* Product Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredProducts.map((product, idx) => (
+            <div
+              key={product.id}
+              onClick={() => handlePurchase(product.id)}
+              className={`
+                relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer
+                transition-all duration-300 hover:scale-105 hover:shadow-2xl
+                ${getBrandColor(product.brand, idx)}
+                group
+              `}
+            >
+              <Badge className="absolute top-3 right-3 z-10 bg-red-500 hover:bg-red-500 text-white font-bold text-xs px-2 py-1">
+                From ${product.price.toFixed(2)}
+              </Badge>
+
+              {purchasing === product.id && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-white" />
+                </div>
+              )}
+
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                {product.image_url ? (
+                  <img 
+                    src={product.image_url} 
+                    alt={product.title}
+                    className="max-w-[80%] max-h-[60%] object-contain drop-shadow-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'block';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className="text-center" 
+                  style={{ display: product.image_url ? 'none' : 'block' }}
+                >
+                  <h3 className="text-white font-bold text-xl md:text-2xl lg:text-3xl drop-shadow-lg uppercase tracking-wide">
+                    {product.brand || product.title}
+                  </h3>
+                  {product.short_description && (
+                    <p className="text-white/80 text-xs mt-1 font-medium">
+                      {product.short_description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="p-4 relative">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <Badge
-            variant="outline"
-            className="text-xs uppercase font-mono border-primary/30 text-primary/80 raised"
-          >
-            TYPE://{product.category}
-          </Badge>
-          <span className="text-primary font-bold font-mono terminal-glow">${product.price}</span>
-        </div>
-
-        <h3 className="font-mono font-semibold text-primary group-hover:terminal-glow transition-all line-clamp-1 mb-1">
-          {'>'} {product.title}
-        </h3>
-
-        {product.short_description && (
-          <p className="text-sm text-muted-foreground font-mono line-clamp-2">
-            {product.short_description}
-          </p>
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            No accounts available.
+          </div>
         )}
+
       </div>
-    </div>
+    </MainLayout>
   );
 }
+
