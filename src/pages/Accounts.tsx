@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, RotateCcw, ShoppingCart, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +14,61 @@ interface Product {
   price: number;
   country: string | null;
   brand: string | null;
+  image_url: string | null;
+}
+
+// Brand color mapping for visual variety
+const brandColors: Record<string, string> = {
+  'subway': 'bg-emerald-600',
+  'onlyfans': 'bg-sky-200',
+  'dollar general': 'bg-yellow-400',
+  'home depot': 'bg-orange-500',
+  'panda express': 'bg-red-600',
+  'steak n shake': 'bg-rose-800',
+  'panera': 'bg-olive-600',
+  'ihg': 'bg-orange-500',
+  'bloomingdales': 'bg-zinc-900',
+  'grubhub': 'bg-orange-500',
+  'perpay': 'bg-blue-600',
+  'bank': 'bg-blue-600',
+  'ulta': 'bg-orange-600',
+  'papa johns': 'bg-red-600',
+  'nike': 'bg-blue-600',
+  'macys': 'bg-white',
+  'netflix': 'bg-black',
+  'spotify': 'bg-green-500',
+  'amazon': 'bg-amber-400',
+  'walmart': 'bg-blue-600',
+  'target': 'bg-red-600',
+  'starbucks': 'bg-green-700',
+  'apple': 'bg-zinc-900',
+  'google': 'bg-white',
+  'facebook': 'bg-blue-600',
+  'instagram': 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400',
+  'twitter': 'bg-sky-500',
+  'paypal': 'bg-blue-700',
+  'venmo': 'bg-sky-400',
+  'cashapp': 'bg-green-500',
+};
+
+// Fallback colors for brands without specific mapping
+const fallbackColors = [
+  'bg-red-500',
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-purple-500',
+  'bg-orange-500',
+  'bg-pink-500',
+  'bg-cyan-500',
+  'bg-amber-500',
+  'bg-indigo-500',
+  'bg-teal-500',
+];
+
+function getBrandColor(brand: string | null, index: number): string {
+  if (!brand) return fallbackColors[index % fallbackColors.length];
+  const key = brand.toLowerCase();
+  return brandColors[key] || fallbackColors[index % fallbackColors.length];
 }
 
 export default function Accounts() {
@@ -24,7 +78,6 @@ export default function Accounts() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState<string>('all');
-  const [cart, setCart] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -34,7 +87,7 @@ export default function Accounts() {
     setLoading(true);
     const { data, error } = await supabase
       .from('products')
-      .select('id, title, short_description, price, country, brand')
+      .select('id, title, short_description, price, country, brand, image_url')
       .eq('is_active', true)
       .eq('product_type', 'accounts')
       .order('created_at', { ascending: false });
@@ -79,36 +132,6 @@ export default function Accounts() {
     }
   };
 
-  const addToCart = (productId: string) => {
-    if (cart.length >= 100) {
-      toast({
-        title: "Cart full",
-        description: "Max 100 items per cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setCart([...cart, productId]);
-  };
-
-  const addMultiple = (count: number) => {
-    const available = products.filter(p => !cart.includes(p.id)).slice(0, count);
-    if (cart.length + available.length > 100) {
-      toast({
-        title: "Cart limit",
-        description: "Max 100 items per cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setCart([...cart, ...available.map(p => p.id)]);
-  };
-
-  const resetFilters = () => {
-    setBrandFilter('all');
-    setCart([]);
-  };
-
   const uniqueBrands = [...new Set(products.map(p => p.brand).filter(Boolean))];
   const filteredProducts = brandFilter === 'all' 
     ? products 
@@ -128,107 +151,86 @@ export default function Accounts() {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <User className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-mono font-bold text-primary terminal-glow">ACCOUNTS://</h1>
-        </div>
-
-        {/* Filters */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 max-w-xs">
-              <label className="text-xs text-muted-foreground mb-1 block">BRAND/SERVICE</label>
-              <Select value={brandFilter} onValueChange={setBrandFilter}>
-                <SelectTrigger className="bg-card border-border">
-                  <SelectValue placeholder="All Brands" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Brands</SelectItem>
-                  {uniqueBrands.map(brand => (
-                    <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-mono font-bold text-primary terminal-glow">ACCOUNTS://</h1>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={resetFilters}>
-              <RotateCcw className="w-3 h-3 mr-1" />
-              Reset Filters
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => addMultiple(5)}>Add 5</Button>
-            <Button variant="outline" size="sm" onClick={() => addMultiple(10)}>Add 10</Button>
-            <Button variant="outline" size="sm" onClick={() => addMultiple(15)}>Add 15</Button>
-            <Button variant="outline" size="sm" onClick={() => addMultiple(25)}>Add 25</Button>
-            <span className="text-xs text-muted-foreground ml-2">Max 100 items per cart.</span>
-          </div>
-        </div>
-
-        {/* Product Table */}
-        <div className="border border-border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-card border-b border-border">
-                <tr>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Title</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Description</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Brand</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Country</th>
-                  <th className="text-right p-3 text-muted-foreground font-medium">Purchase</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map((product, idx) => (
-                  <tr 
-                    key={product.id} 
-                    className={`border-b border-border/50 hover:bg-card/50 transition-colors ${idx % 2 === 0 ? 'bg-background' : 'bg-card/20'}`}
-                  >
-                    <td className="p-3 font-mono text-foreground">{product.title}</td>
-                    <td className="p-3 text-foreground">{product.short_description || '-'}</td>
-                    <td className="p-3 text-foreground">{product.brand || '-'}</td>
-                    <td className="p-3 text-foreground">{product.country || '-'}</td>
-                    <td className="p-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Badge variant="destructive" className="font-mono">
-                          ${product.price.toFixed(2)}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-                          onClick={() => handlePurchase(product.id)}
-                          disabled={purchasing === product.id}
-                        >
-                          {purchasing === product.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            'Buy'
-                          )}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+          
+          {/* Filter */}
+          <div className="w-48">
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger className="bg-card border-border">
+                <SelectValue placeholder="All Brands" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Brands</SelectItem>
+                {uniqueBrands.map(brand => (
+                  <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
                 ))}
-              </tbody>
-            </table>
+              </SelectContent>
+            </Select>
           </div>
+        </div>
+
+        {/* Product Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredProducts.map((product, idx) => (
+            <div
+              key={product.id}
+              onClick={() => handlePurchase(product.id)}
+              className={`
+                relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer
+                transition-all duration-300 hover:scale-105 hover:shadow-2xl
+                ${getBrandColor(product.brand, idx)}
+                group
+              `}
+            >
+              {/* Price Badge */}
+              <Badge 
+                className="absolute top-3 right-3 z-10 bg-red-500 hover:bg-red-500 text-white font-bold text-xs px-2 py-1"
+              >
+                From ${product.price.toFixed(2)}
+              </Badge>
+
+              {/* Loading Overlay */}
+              {purchasing === product.id && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-white" />
+                </div>
+              )}
+
+              {/* Brand Logo/Image or Text */}
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                {product.image_url ? (
+                  <img 
+                    src={product.image_url} 
+                    alt={product.title}
+                    className="max-w-[80%] max-h-[60%] object-contain"
+                  />
+                ) : (
+                  <div className="text-center">
+                    <h3 className="text-white font-bold text-xl md:text-2xl lg:text-3xl drop-shadow-lg uppercase tracking-wide">
+                      {product.brand || product.title}
+                    </h3>
+                    {product.short_description && (
+                      <p className="text-white/80 text-xs mt-1 font-medium">
+                        {product.short_description}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+            </div>
+          ))}
         </div>
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             No accounts available.
-          </div>
-        )}
-
-        {/* Cart Summary */}
-        {cart.length > 0 && (
-          <div className="fixed bottom-4 right-4 bg-card border border-primary p-4 rounded-lg shadow-lg">
-            <div className="flex items-center gap-3">
-              <ShoppingCart className="w-5 h-5 text-primary" />
-              <span className="font-mono">{cart.length} items</span>
-              <Button size="sm" onClick={() => setCart([])}>Clear</Button>
-            </div>
           </div>
         )}
       </div>
