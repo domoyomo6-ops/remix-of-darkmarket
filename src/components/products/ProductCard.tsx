@@ -17,7 +17,6 @@ interface Product {
   image_url: string | null;
 }
 
-// Brand color mapping
 const brandColors: Record<string, string> = {
   'subway': 'bg-emerald-600',
   'onlyfans': 'bg-sky-200',
@@ -68,7 +67,7 @@ export default function Accounts() {
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState<string>('all');
 
-  // NEW: Test Imgur image URL
+  // NEW: Test Imgur image URL as a fake product
   const [testImageUrl, setTestImageUrl] = useState('');
 
   useEffect(() => {
@@ -112,9 +111,25 @@ export default function Accounts() {
   };
 
   const uniqueBrands = [...new Set(products.map(p => p.brand).filter(Boolean))];
-  const filteredProducts = brandFilter === 'all' 
+  let filteredProducts = brandFilter === 'all' 
     ? products 
     : products.filter(p => p.brand === brandFilter);
+
+  // Add test Imgur product if URL is provided
+  if (testImageUrl) {
+    filteredProducts = [
+      {
+        id: 'test-imgur',
+        title: 'Test Image',
+        short_description: 'This is a test Imgur product',
+        price: 0,
+        country: null,
+        brand: null,
+        image_url: testImageUrl
+      },
+      ...filteredProducts
+    ];
+  }
 
   if (loading) {
     return (
@@ -153,29 +168,16 @@ export default function Accounts() {
           </div>
         </div>
 
-        {/* NEW: Test Imgur URL Input */}
+        {/* NEW: Imgur Test URL Input */}
         <div className="mb-6 flex flex-col md:flex-row gap-3 items-start">
           <input 
             type="text"
-            placeholder="https://imgur.com/a/ON2Z0SH"
+            placeholder="Paste Imgur image URL here..."
             value={testImageUrl}
             onChange={e => setTestImageUrl(e.target.value)}
             className="border border-border rounded px-3 py-2 flex-1 bg-card text-white placeholder:text-muted-foreground"
           />
-          <button
-            onClick={() => setTestImageUrl(testImageUrl)}
-            className="bg-primary text-white px-4 py-2 rounded hover:brightness-110"
-          >
-            Show Image
-          </button>
         </div>
-
-        {/* Test Image Preview */}
-        {testImageUrl && (
-          <div className="relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer bg-black/40 flex items-center justify-center mb-6">
-            <img src={testImageUrl} alt="Test Imgur" className="max-w-[80%] max-h-[80%] object-contain" />
-          </div>
-        )}
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -191,7 +193,7 @@ export default function Accounts() {
               `}
             >
               <Badge className="absolute top-3 right-3 z-10 bg-red-500 hover:bg-red-500 text-white font-bold text-xs px-2 py-1">
-                From ${product.price.toFixed(2)}
+                {product.price > 0 ? `From $${product.price.toFixed(2)}` : 'Test'}
               </Badge>
 
               {purchasing === product.id && (
@@ -243,4 +245,5 @@ export default function Accounts() {
     </MainLayout>
   );
 }
+
 
