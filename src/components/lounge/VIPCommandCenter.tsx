@@ -21,6 +21,9 @@ interface MutedUser {
   display_name: string;
 }
 
+type Vec2 = { x: number; y: number };
+const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+
 export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps) {
   const { user, isAdmin } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -33,6 +36,107 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
   const [loungeState, setLoungeState] = useState<'open' | 'restricted' | 'locked'>('open');
   const [vipMode, setVipMode] = useState<'observe' | 'broadcast' | 'moderate'>('observe');
   const glowRef = useRef<HTMLDivElement>(null);
+
+  // ====== MOVEABLE (DRAG) + LOCKDOWN (CLAMP TO SCREEN) ======
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const [panelPos, setPanelPos] = useState<Vec2>(() => {
+    try {
+      const saved = localStorage.getItem('vip_cc_pos');
+      return saved ? JSON.parse(saved) : { x: 24, y: 120 };
+    } catch {
+      return { x: 24, y: 120 };
+    }
+  });
+
+  const [panelLocked, setPanelLocked] = useState(() => {
+    return localStorage.getItem('vip_cc_locked') === 'true';
+  });
+
+  const dragRef = useRef({
+    dragging: false,
+    startX: 0,
+    startY: 0,
+    startPosX: 0,
+    startPosY: 0,
+  });
+
+  useEffect(() => {
+    localStorage.setItem('vip_cc_pos', JSON.stringify(panelPos));
+  }, [panelPos]);
+
+  useEffect(() => {
+    localStorage.setItem('vip_cc_locked', String(panelLocked));
+  }, [panelLocked]);
+
+  const clampToViewport = () => {
+    const el = panelRef.current;
+    if (!el) return;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = el.getBoundingClientRect();
+
+    const maxX = Math.max(0, vw - rect.width);
+    const maxY = Math.max(0, vh - rect.height);
+
+    setPanelPos((p) => ({
+      x: clamp(p.x, 0, maxX),
+      y: clamp(p.y, 0, maxY),
+    }));
+  };
+
+  useEffect(() => {
+    const onResize = () => clampToViewport();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onHeaderPointerDown = (e: React.PointerEvent) => {
+    if (panelLocked) return;
+
+    const el = panelRef.current;
+    if (!el) return;
+
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+    dragRef.current.dragging = true;
+    dragRef.current.startX = e.clientX;
+    dragRef.current.startY = e.clientY;
+    dragRef.current.startPosX = panelPos.x;
+    dragRef.current.startPosY = panelPos.y;
+  };
+
+  const onHeaderPointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current.dragging || panelLocked) return;
+
+    const el = panelRef.current;
+    if (!el) return;
+
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+
+    const nextX = dragRef.current.startPosX + dx;
+    const nextY = dragRef.current.startPosY + dy;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = el.getBoundingClientRect();
+
+    const maxX = Math.max(0, vw - rect.width);
+    const maxY = Math.max(0, vh - rect.height);
+
+    setPanelPos({
+      x: clamp(nextX, 0, maxX),
+      y: clamp(nextY, 0, maxY),
+    });
+  };
+
+  const onHeaderPointerUp = () => {
+    dragRef.current.dragging = false;
+  };
+  // ====== END MOVEABLE ======
 
   if (!isAdmin) return null;
 
@@ -75,7 +179,7 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
     const currentIdx = states.indexOf(loungeState);
     const nextState = states[(currentIdx + 1) % states.length];
     setLoungeState(nextState);
-    
+
     const messages = {
       open: 'Lounge is now open to all',
       restricted: 'Lounge restricted - Invite only',
@@ -111,16 +215,23 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
   };
 
   return (
-    <div 
-      ref={glowRef}
-      className={`fixed bottom-20 right-4 w-80 z-50 transition-all duration-300 ${
+    <div
+      ref={panelRef}
+      className={`fixed w-80 z-50 transition-all duration-300 select-none ${
         isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]'
       }`}
+      style={{
+        left: panelPos.x,
+        top: panelPos.y,
+      }}
     >
-      {/* VIP Header */}
+      {/* VIP Header (DRAG HANDLE) */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`w-full flex items-center justify-between p-3 rounded-t-xl bg-gradient-to-r ${getModeColor()} border-t border-x backdrop-blur-xl`}
+        onPointerDown={onHeaderPointerDown}
+        onPointerMove={onHeaderPointerMove}
+        onPointerUp={onHeaderPointerUp}
+        className={`w-full flex items-center justify-between p-3 rounded-t-xl bg-gradient-to-r ${getModeColor()} border-t border-x backdrop-blur-xl cursor-move`}
       >
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -132,7 +243,29 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
           </span>
           <Sparkles className="w-4 h-4 text-amber-400/60" />
         </div>
-        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7"
+            onClick={(e) => {
+              e.stopPropagation(); // don’t collapse when clicking lock
+              setPanelLocked((v) => !v);
+              // also re-clamp after unlocking/locking just in case
+              requestAnimationFrame(() => clampToViewport());
+            }}
+            aria-label={panelLocked ? 'Unlock panel' : 'Lock panel'}
+          >
+            {panelLocked
+              ? <Lock className="w-4 h-4 text-amber-400" />
+              : <Unlock className="w-4 h-4 text-amber-400" />
+            }
+          </Button>
+
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+        </div>
       </button>
 
       {/* Content */}
@@ -174,7 +307,7 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
                 {isSpectating ? 'Visible' : 'Hidden'}
               </Button>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={spectateChat ? "default" : "outline"}
@@ -218,7 +351,7 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
                 className="mt-2 bg-black/50 border-primary/30 resize-none text-sm"
                 rows={2}
               />
-              <Button 
+              <Button
                 onClick={sendAnnouncement}
                 className="w-full mt-2 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 disabled={!announcementText.trim()}
@@ -271,7 +404,7 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
               </span>
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {onlineUsers.filter(u => !u.is_admin && u.user_id !== user?.id).map((u) => (
-                  <div 
+                  <div
                     key={u.id}
                     className="flex items-center justify-between p-2 rounded-lg bg-black/30 hover:bg-black/50 transition-colors"
                   >
@@ -291,8 +424,8 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
                         onClick={() => toggleUserMute(u.user_id, u.display_name || 'User')}
                         aria-label={mutedUsers.some(m => m.id === u.user_id) ? "Unmute user" : "Mute user"}
                       >
-                        {mutedUsers.some(m => m.id === u.user_id) 
-                          ? <MicOff className="w-3 h-3 text-red-400" /> 
+                        {mutedUsers.some(m => m.id === u.user_id)
+                          ? <MicOff className="w-3 h-3 text-red-400" />
                           : <Mic className="w-3 h-3" />
                         }
                       </Button>
@@ -343,4 +476,6 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
       </div>
     </div>
   );
+}
+
 }
