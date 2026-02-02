@@ -68,6 +68,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Note: isAdmin prop is for admin-only buttons, not for disabling all buttons
     const shouldDisable = isLoading || disabled || isMaxedOut;
 
+    // When asChild is true, we can't add extra children like the loader
+    // so we skip the loading spinner for asChild buttons
+    const content = asChild ? (
+      children
+    ) : (
+      <>
+        {isLoading && <Loader2 className="animate-spin" />}
+        {children}
+      </>
+    );
+
     return (
       <Comp
         ref={ref}
@@ -80,8 +91,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         }}
         {...props}
       >
-        {isLoading && <Loader2 className="animate-spin" />}
-        {children}
+        {content}
       </Comp>
     );
   }
