@@ -1,104 +1,100 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Loader2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import MainLayout from '@/components/layout/MainLayout';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: string;
   title: string;
   short_description: string | null;
   price: number;
-  country: string | null;
   brand: string | null;
   image_url: string | null;
 }
 
-const brandColors: Record<string, string> = {
-  subway: 'bg-emerald-600',
-  onlyfans: 'bg-sky-200',
-  'dollar general': 'bg-yellow-400',
-  'home depot': 'bg-orange-500',
-  netflix: 'bg-black',
-  spotify: 'bg-green-500',
-  amazon: 'bg-amber-400',
-  walmart: 'bg-blue-600',
-  target: 'bg-red-600',
-  apple: 'bg-zinc-900',
-};
-
 const fallbackColors = [
-  'bg-red-500',
-  'bg-blue-500',
-  'bg-green-500',
-  'bg-purple-500',
-  'bg-orange-500',
+  'bg-red-600',
+  'bg-blue-600',
+  'bg-green-600',
+  'bg-purple-600',
+  'bg-orange-600',
 ];
 
-function getBrandColor(brand: string | null, index: number) {
-  if (!brand) return fallbackColors[index % fallbackColors.length];
-  return brandColors[brand.toLowerCase()] || fallbackColors[index % fallbackColors.length];
-}
+const getColor = (_brand: string | null, i: number) =>
+  fallbackColors[i % fallbackColors.length];
 
 export default function Accounts() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState('all');
+  const [purchasing, setPurchasing] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    const { data } = await supabase
+    supabase
       .from('products')
-      .select('id, title, short_description, price, country, brand, image_url')
+      .select('id,title,short_description,price,brand,image_url')
       .eq('is_active', true)
       .eq('product_type', 'accounts')
-      .order('created_at', { ascending: false });
-
-    setProducts(data || []);
-    setLoading(false);
-  };
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setProducts(data || []);
+        setLoading(false);
+      });
+  }, []);
 
   const handlePurchase = async (productId: string) => {
     if (!user) return;
-    setPurchasing(productId);
 
+    setPurchasing(productId);
     try {
       const { data, error } = await supabase.rpc('purchase_with_wallet', {
         p_product_id: productId,
       });
+
       if (error) throw error;
 
       if (data?.success) {
-        toast({ title: 'Purchase successful!' });
-        fetchProducts();
+        toast({
+          title: 'Purchase successful',
+          description: 'Check your orders page.',
+        });
       }
     } catch (e: any) {
-      toast({ title: 'Purchase failed', description: e.message, variant: 'destructive' });
+      toast({
+        title: 'Purchase failed',
+        description: e.message,
+        variant: 'destructive',
+      });
     } finally {
       setPurchasing(null);
     }
   };
 
-  const uniqueBrands = [...new Set(products.map(p => p.brand).filter(Boolean))];
-  const filtered = brandFilter === 'all'
-    ? products
-    : products.filter(p => p.brand === brandFilter);
+  const filtered =
+    brandFilter === 'all'
+      ? products
+      : products.filter(p => p.brand === brandFilter);
 
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin" />
+        <div className="flex justify-center min-h-[60vh] items-center">
+          <Loader2 className="animate-spin w-8 h-8" />
         </div>
       </MainLayout>
     );
@@ -107,8 +103,9 @@ export default function Accounts() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex justify-between items-center">
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <User className="w-6 h-6 text-primary" />
             <h1 className="text-2xl font-mono font-bold terminal-glow">
               ACCOUNTS://
@@ -121,21 +118,25 @@ export default function Accounts() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Brands</SelectItem>
-              {uniqueBrands.map(b => (
-                <SelectItem key={b} value={b!}>{b}</SelectItem>
+              {[...new Set(products.map(p => p.brand).filter(Boolean))].map(b => (
+                <SelectItem key={b} value={b!}>
+                  {b}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {filtered.map((product, idx) => (
-            <TiltCard
-              key={product.id}
-              product={product}
-              idx={idx}
-              purchasing={purchasing === product.id}
-              onClick={() => handlePurchase(product.id)}
+        {/* Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filtered.map((p, i) => (
+            <UltraCard
+              key={p.id}
+              product={p}
+              bg={getColor(p.brand, i)}
+              purchasing={purchasing === p.id}
+              onNavigate={() => navigate(`/accounts/${p.id}`)}
+              onBuy={() => handlePurchase(p.id)}
             />
           ))}
         </div>
@@ -144,75 +145,123 @@ export default function Accounts() {
   );
 }
 
-/* ========================= */
-/* ===== TILT CARD ========= */
-/* ========================= */
+/* ========================== */
+/* ===== ULTRA CARD ========= */
+/* ========================== */
 
-function TiltCard({
+function UltraCard({
   product,
-  idx,
+  bg,
   purchasing,
-  onClick,
+  onNavigate,
+  onBuy,
 }: {
   product: Product;
-  idx: number;
+  bg: string;
   purchasing: boolean;
-  onClick: () => void;
+  onNavigate: () => void;
+  onBuy: () => void;
 }) {
-  const [style, setStyle] = useState({});
+  const ref = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState<any>({});
+  const [glow, setGlow] = useState<any>({});
 
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const onMove = (e: React.MouseEvent) => {
+    const el = ref.current!;
+    const r = el.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
 
-    const rotateX = ((y / rect.height) - 0.5) * -14;
-    const rotateY = ((x / rect.width) - 0.5) * 14;
+    const rx = ((y / r.height) - 0.5) * -18;
+    const ry = ((x / r.width) - 0.5) * 18;
 
     setStyle({
-      transform: `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.06)`,
+      transform: `
+        perspective(1200px)
+        rotateX(${rx}deg)
+        rotateY(${ry}deg)
+        scale(1.08)
+      `,
+    });
+
+    setGlow({
+      background: `radial-gradient(
+        600px at ${x}px ${y}px,
+        rgba(255,255,255,.35),
+        transparent 60%
+      )`,
     });
   };
 
   return (
     <div
-      onMouseMove={handleMove}
-      onMouseLeave={() => setStyle({ transform: 'perspective(900px) rotateX(0) rotateY(0)' })}
-      onClick={onClick}
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={() => {
+        setStyle({ transform: 'perspective(1200px) rotateX(0) rotateY(0)' });
+        setGlow({});
+      }}
+      onClick={onNavigate}
       style={style}
       className={`
-        relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer
+        relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer
         transition-transform duration-200 ease-out
-        shadow-[0_10px_30px_rgba(0,0,0,0.45)]
-        ${getBrandColor(product.brand, idx)}
+        ${bg}
         group
       `}
     >
-      {/* 3D Border */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-white/20 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/30 before:to-black/50" />
+      {/* Neon Border */}
+      <div className="absolute inset-0 rounded-2xl pointer-events-none">
+        <div className="absolute inset-0 animate-spin-slow bg-gradient-to-r from-fuchsia-500 via-cyan-400 to-purple-600 opacity-70 blur-md" />
+        <div className="absolute inset-[2px] rounded-2xl bg-black/30" />
+      </div>
 
       {/* Image */}
       {product.image_url && (
         <img
           src={product.image_url}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
       )}
 
+      {/* Cursor Light */}
+      <div
+        className="absolute inset-0 mix-blend-overlay pointer-events-none"
+        style={glow}
+      />
+
       {/* Price */}
-      <Badge className="absolute top-3 right-3 z-10 bg-red-500">
+      <Badge className="absolute top-3 right-3 z-20 bg-red-500">
         ${product.price.toFixed(2)}
       </Badge>
 
+      {/* BUY BUTTON */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // 🔥 keeps navigation intact
+          onBuy();
+        }}
+        className="
+          absolute bottom-3 left-1/2 -translate-x-1/2 z-30
+          px-5 py-1.5 rounded-full
+          bg-black/70 backdrop-blur
+          text-white text-xs font-bold tracking-wide
+          border border-white/20
+          hover:bg-white hover:text-black
+          transition-all
+        "
+      >
+        BUY
+      </button>
+
+      {/* Purchasing Overlay */}
       {purchasing && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
-          <Loader2 className="animate-spin w-8 h-8 text-white" />
+        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-40">
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
         </div>
       )}
-
-      {/* Light Sweep */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }
+
 
