@@ -48,11 +48,7 @@ export default function Desktop() {
   }, []);
 
   const startMenuItems = useMemo(
-    () =>
-      desktopIcons.map(icon => ({
-        ...icon,
-        action: () => navigate(icon.route),
-      })),
+    () => desktopIcons.map(icon => ({ ...icon, action: () => navigate(icon.route) })),
     [navigate]
   );
 
@@ -68,11 +64,13 @@ export default function Desktop() {
             key={icon.id}
             onClick={() => {
               setSelectedIcon(icon.id);
-              navigate(icon.route); // ✅ RESTORED NAVIGATION
+              navigate(icon.route); // ✅ instant open
             }}
             className={`
               flex flex-col items-center gap-2 p-3 rounded-lg
-              transition-all duration-200 group
+              transition-all duration-150 ease-out
+              active:scale-95 active:bg-primary/30
+              group
               ${selectedIcon === icon.id
                 ? 'bg-primary/20 ring-1 ring-primary/50'
                 : 'hover:bg-white/5'}
@@ -149,3 +147,4 @@ export default function Desktop() {
     </div>
   );
 }
+
