@@ -107,6 +107,8 @@ export default function Homepage() {
       <div className="min-h-screen relative">
         {/* Scanline overlay */}
         <div className="pointer-events-none fixed inset-0 opacity-[0.03] bg-[linear-gradient(rgba(0,255,150,0.2)_1px,transparent_1px)] bg-[size:100%_3px] z-10" />
+        <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,#0f172a,transparent_55%),radial-gradient(circle_at_center,#0f172a,transparent_35%),radial-gradient(circle_at_bottom,#02030a,transparent_60%)] opacity-80" />
+        <div className="pointer-events-none fixed inset-0 z-0 bg-gradient-to-b from-[#05060b]/40 via-transparent to-[#02030a]/80" />
 
         <div className="container mx-auto px-4 py-6 sm:py-8 relative z-20 border-dotted">
           {/* Hero Section */}

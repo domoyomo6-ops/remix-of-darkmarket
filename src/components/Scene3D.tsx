@@ -1,38 +1,79 @@
-import { useRef, useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-function GridPlane() {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.z = (state.clock.elapsedTime * 2) % 10;
-    }
-  });
-
+function AbyssDome() {
   return (
-    <mesh ref={meshRef} rotation={[-Math.PI / 2.5, 0, 0]} position={[0, -2, 0]}>
-      <planeGeometry args={[40, 40, 40, 40]} />
-      <meshBasicMaterial 
-        color="#22c55e" 
-        wireframe 
-        transparent 
-        opacity={0.15}
-      />
+    <mesh>
+      <sphereGeometry args={[60, 64, 64]} />
+      <meshBasicMaterial color="#05060b" side={THREE.BackSide} />
     </mesh>
   );
 }
 
-function FloatingParticles() {
+function AbyssRings() {
+  const groupRef = useRef<THREE.Group>(null);
+  const rings = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, index) => ({
+        radius: 3 + index * 1.2,
+        thickness: 0.06 + index * 0.01,
+        z: -index * 4 - 4,
+        rotation: Math.random() * Math.PI,
+      })),
+    []
+  );
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    groupRef.current.children.forEach((ring, index) => {
+      ring.rotation.z += delta * 0.15;
+      ring.position.z += delta * 4.2;
+      if (ring.position.z > 6) {
+        ring.position.z = -54;
+        ring.rotation.z = rings[index].rotation;
+      }
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {rings.map((ring, index) => (
+        <mesh key={index} position={[0, 0, ring.z]} rotation={[Math.PI / 2.2, 0, ring.rotation]}>
+          <torusGeometry args={[ring.radius, ring.thickness, 16, 60]} />
+          <meshBasicMaterial color="#0ea5e9" transparent opacity={0.15} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function AbyssGrid() {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.position.z = (state.clock.elapsedTime * 2.8) % 16;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} rotation={[-Math.PI / 2.1, 0, 0]} position={[0, -4, 0]}>
+      <planeGeometry args={[80, 80, 40, 40]} />
+      <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.12} />
+    </mesh>
+  );
+}
+
+function AbyssParticles() {
   const pointsRef = useRef<THREE.Points>(null);
-  
+
   const particles = useMemo(() => {
-    const positions = new Float32Array(200 * 3);
-    for (let i = 0; i < 200; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+    const positions = new Float32Array(600 * 3);
+    for (let i = 0; i < 600; i += 1) {
+      positions[i * 3] = (Math.random() - 0.5) * 32;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 24;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 70;
     }
     return positions;
   }, []);
@@ -40,130 +81,79 @@ function FloatingParticles() {
   useFrame((state) => {
     if (pointsRef.current) {
       pointsRef.current.rotation.y = state.clock.elapsedTime * 0.05;
-      pointsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.1;
+      pointsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.08;
     }
   });
 
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={200}
-          array={particles}
-          itemSize={3}
-        />
+        <bufferAttribute attach="attributes-position" count={600} array={particles} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial 
-        color="#22c55e" 
-        size={0.05} 
-        transparent 
-        opacity={0.6}
-        sizeAttenuation
-      />
+      <pointsMaterial color="#38bdf8" size={0.08} transparent opacity={0.45} sizeAttenuation />
     </points>
   );
 }
 
-function DataLines() {
-  const linesRef = useRef<THREE.Group>(null);
-  
-  const lines = useMemo(() => {
-    const lineData = [];
-    for (let i = 0; i < 8; i++) {
-      const points = [];
-      const startX = (Math.random() - 0.5) * 15;
-      const startY = (Math.random() - 0.5) * 10;
-      const startZ = (Math.random() - 0.5) * 10;
-      
-      points.push(new THREE.Vector3(startX, startY, startZ));
-      points.push(new THREE.Vector3(startX + (Math.random() - 0.5) * 5, startY + (Math.random() - 0.5) * 3, startZ - 5));
-      points.push(new THREE.Vector3(startX + (Math.random() - 0.5) * 8, startY + (Math.random() - 0.5) * 5, startZ - 10));
-      
-      lineData.push(points);
-    }
-    return lineData;
-  }, []);
-
-  useFrame((state) => {
-    if (linesRef.current) {
-      linesRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1;
-    }
-  });
-
-  return (
-    <group ref={linesRef}>
-      {lines.map((points, i) => (
-        <line key={i}>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={points.length}
-              array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <lineBasicMaterial color="#22c55e" transparent opacity={0.3} />
-        </line>
-      ))}
-    </group>
-  );
-}
-
-function FloatingCubes() {
+function AbyssGlows() {
   const groupRef = useRef<THREE.Group>(null);
-  
-  const cubes = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => ({
-      position: [
-        (Math.random() - 0.5) * 12,
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 8 - 5
-      ] as [number, number, number],
-      scale: 0.3 + Math.random() * 0.4,
-      rotationSpeed: 0.2 + Math.random() * 0.3
-    }));
-  }, []);
+  const glows = useMemo(
+    () =>
+      Array.from({ length: 8 }, () => ({
+        position: [
+          (Math.random() - 0.5) * 18,
+          (Math.random() - 0.5) * 12,
+          -Math.random() * 40,
+        ] as [number, number, number],
+        scale: 0.8 + Math.random() * 1.8,
+        speed: 0.3 + Math.random() * 0.4,
+      })),
+    []
+  );
 
   useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.children.forEach((cube, i) => {
-        cube.rotation.x = state.clock.elapsedTime * cubes[i].rotationSpeed;
-        cube.rotation.y = state.clock.elapsedTime * cubes[i].rotationSpeed * 0.7;
-        cube.position.y = cubes[i].position[1] + Math.sin(state.clock.elapsedTime + i) * 0.5;
-      });
-    }
+    if (!groupRef.current) return;
+    groupRef.current.children.forEach((glow, index) => {
+      glow.position.y = glows[index].position[1] + Math.sin(state.clock.elapsedTime * glows[index].speed) * 0.6;
+      glow.rotation.y = state.clock.elapsedTime * 0.15;
+    });
   });
 
   return (
     <group ref={groupRef}>
-      {cubes.map((cube, i) => (
-        <mesh key={i} position={cube.position} scale={cube.scale}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial 
-            color="#22c55e" 
-            wireframe 
-            transparent 
-            opacity={0.4}
-          />
+      {glows.map((glow, index) => (
+        <mesh key={index} position={glow.position} scale={glow.scale}>
+          <sphereGeometry args={[0.5, 16, 16]} />
+          <meshBasicMaterial color="#22d3ee" transparent opacity={0.2} />
         </mesh>
       ))}
     </group>
   );
 }
 
+function CameraRig() {
+  useFrame((state) => {
+    const { camera, pointer } = state;
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * 2.4, 0.06);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, pointer.y * 1.6, 0.06);
+    camera.lookAt(0, 0, -18);
+  });
+
+  return null;
+}
+
 export default function Scene3D() {
   return (
     <div className="absolute inset-0 -z-10">
-      <Canvas
-        camera={{ position: [0, 0, 8], fov: 60 }}
-        style={{ background: 'transparent' }}
-      >
-        <ambientLight intensity={0.5} />
-        <GridPlane />
-        <FloatingParticles />
-        <DataLines />
-        <FloatingCubes />
+      <Canvas camera={{ position: [0, 0.5, 6], fov: 60 }} style={{ background: 'transparent' }}>
+        <fog attach="fog" args={['#05060b', 8, 48]} />
+        <ambientLight intensity={0.35} />
+        <AbyssDome />
+        <AbyssRings />
+        <AbyssGrid />
+        <AbyssParticles />
+        <AbyssGlows />
+        <CameraRig />
       </Canvas>
     </div>
   );
