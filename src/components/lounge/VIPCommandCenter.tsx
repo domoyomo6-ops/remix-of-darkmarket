@@ -93,6 +93,17 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // IMPORTANT: stop dragging even if pointer is released outside header
+  useEffect(() => {
+    const stop = () => { dragRef.current.dragging = false; };
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+    return () => {
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+    };
+  }, []);
+
   const onHeaderPointerDown = (e: React.PointerEvent) => {
     if (panelLocked) return;
 
@@ -226,62 +237,61 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
       }}
     >
       {/* VIP Header (DRAG HANDLE) */}
-      {/* VIP Header (DRAG HANDLE) */}
-<div
-  onPointerDown={onHeaderPointerDown}
-  onPointerMove={onHeaderPointerMove}
-  onPointerUp={onHeaderPointerUp}
-  onPointerCancel={onHeaderPointerUp}
-  className={`w-full flex items-center justify-between p-3 rounded-t-xl bg-gradient-to-r ${getModeColor()} border-t border-x backdrop-blur-xl cursor-move`}
->
-  <div className="flex items-center gap-2">
-    <div className="relative">
-      <Crown className="w-5 h-5 text-amber-400 animate-pulse" />
-      <div className="absolute inset-0 w-5 h-5 bg-amber-400/50 blur-md animate-pulse" />
-    </div>
-    <span className="font-mono font-bold text-amber-400 text-sm tracking-wider">
-      VIP COMMAND CENTER
-    </span>
-    <Sparkles className="w-4 h-4 text-amber-400/60" />
-  </div>
+      <div
+        onPointerDown={onHeaderPointerDown}
+        onPointerMove={onHeaderPointerMove}
+        onPointerUp={onHeaderPointerUp}
+        onPointerCancel={onHeaderPointerUp}
+        className={`w-full flex items-center justify-between p-3 rounded-t-xl bg-gradient-to-r ${getModeColor()} border-t border-x backdrop-blur-xl cursor-move`}
+      >
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Crown className="w-5 h-5 text-amber-400 animate-pulse" />
+            <div className="absolute inset-0 w-5 h-5 bg-amber-400/50 blur-md animate-pulse" />
+          </div>
+          <span className="font-mono font-bold text-amber-400 text-sm tracking-wider">
+            VIP COMMAND CENTER
+          </span>
+          <Sparkles className="w-4 h-4 text-amber-400/60" />
+        </div>
 
-  <div className="flex items-center gap-2">
-    {/* LOCK BUTTON */}
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="w-7 h-7"
-      onClick={(e) => {
-        e.stopPropagation();
-        setPanelLocked((v) => !v);
-        requestAnimationFrame(() => clampToViewport());
-      }}
-      aria-label={panelLocked ? 'Unlock panel' : 'Lock panel'}
-    >
-      {panelLocked
-        ? <Lock className="w-4 h-4 text-amber-400" />
-        : <Unlock className="w-4 h-4 text-amber-400" />
-      }
-    </Button>
+        <div className="flex items-center gap-2">
+          {/* LOCK BUTTON */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPanelLocked((v) => !v);
+              requestAnimationFrame(() => clampToViewport());
+            }}
+            aria-label={panelLocked ? 'Unlock panel' : 'Lock panel'}
+          >
+            {panelLocked
+              ? <Lock className="w-4 h-4 text-amber-400" />
+              : <Unlock className="w-4 h-4 text-amber-400" />
+            }
+          </Button>
 
-    {/* EXPAND/COLLAPSE BUTTON (separate from drag) */}
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="w-7 h-7"
-      onClick={(e) => {
-        e.stopPropagation();
-        setIsExpanded((v) => !v);
-        requestAnimationFrame(() => clampToViewport());
-      }}
-      aria-label={isExpanded ? 'Collapse' : 'Expand'}
-    >
-      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-    </Button>
-  </div>
-</div>
+          {/* EXPAND/COLLAPSE BUTTON */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded((v) => !v);
+              requestAnimationFrame(() => clampToViewport());
+            }}
+            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          >
+            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
 
       {/* Content */}
       <div className={`bg-gradient-to-b from-black/95 to-zinc-900/95 border border-t-0 ${getModeColor().split(' ').slice(2).join(' ')} rounded-b-xl backdrop-blur-xl overflow-hidden`}>
@@ -368,7 +378,7 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
               />
               <Button
                 onClick={sendAnnouncement}
-                className="w-full mt-2 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="w-full mt-2 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"}
                 disabled={!announcementText.trim()}
               >
                 <Megaphone className="w-4 h-4" />
@@ -493,4 +503,3 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
   );
 }
 
-}
