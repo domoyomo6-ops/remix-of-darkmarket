@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['JetBrains Mono', 'Space Mono', 'ui-monospace', 'monospace'],
-        mono: ['JetBrains Mono', 'Space Mono', 'ui-monospace', 'monospace'],
-        display: ['JetBrains Mono', 'Space Mono', 'ui-monospace', 'monospace'],
+        sans: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        display: ['Orbitron', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
