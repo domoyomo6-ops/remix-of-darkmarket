@@ -114,6 +114,38 @@
     font-family: var(--font-mono);
     letter-spacing: 0.02em;
     perspective: var(--perspective);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  body::before {
+    background:
+      linear-gradient(120deg, rgba(255, 61, 144, 0.12), rgba(0, 255, 210, 0.08)),
+      radial-gradient(circle at 12% 18%, rgba(255, 221, 87, 0.18), transparent 40%),
+      radial-gradient(circle at 78% 22%, rgba(0, 184, 255, 0.18), transparent 45%),
+      radial-gradient(circle at 50% 78%, rgba(255, 69, 69, 0.16), transparent 42%),
+      repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0 12px, transparent 12px 24px);
+    filter: saturate(160%);
+    opacity: 0.9;
+  }
+
+  body::after {
+    background:
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 8px),
+      radial-gradient(circle at 20% 70%, rgba(255, 0, 180, 0.1), transparent 50%),
+      radial-gradient(circle at 85% 65%, rgba(0, 255, 150, 0.1), transparent 50%);
+    mix-blend-mode: screen;
+    opacity: 0.6;
   }
 
   h1, h2, h3, h4, h5, h6 {
