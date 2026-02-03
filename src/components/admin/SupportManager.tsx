@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  MessageCircle, Send, Loader2, User, Check, X, 
-  ChevronRight, Clock, AlertCircle
+import {
+  MessageCircle, Send, Loader2, User, X,
+  Clock, ClipboardList
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ export default function SupportManager() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
+  const [chatFilter, setChatFilter] = useState<'all' | 'open' | 'pending' | 'closed'>('all');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -230,6 +231,14 @@ export default function SupportManager() {
     pending: 'bg-amber-500',
   };
 
+  const filteredChats = chats.filter(chat => chatFilter === 'all' ? true : chat.status === chatFilter);
+  const chatCounts = {
+    all: chats.length,
+    open: chats.filter(chat => chat.status === 'open').length,
+    pending: chats.filter(chat => chat.status === 'pending').length,
+    closed: chats.filter(chat => chat.status === 'closed').length,
+  };
+
   return (
     <div className="space-y-6">
       {/* Status Control */}
@@ -261,19 +270,36 @@ export default function SupportManager() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         {/* Chat List */}
         <Card className="lg:col-span-1 overflow-hidden">
-          <CardHeader className="py-3 border-b border-border">
-            <CardTitle className="text-sm">Active Chats ({chats.filter(c => c.status === 'open').length})</CardTitle>
+          <CardHeader className="py-3 border-b border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">Support Queue</CardTitle>
+              <span className="text-xs text-muted-foreground">Total: {chatCounts.all}</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-[11px]">
+              {(['all', 'open', 'pending', 'closed'] as const).map(filter => (
+                <Button
+                  key={filter}
+                  type="button"
+                  variant={chatFilter === filter ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChatFilter(filter)}
+                  className="h-7 px-2 text-[11px]"
+                >
+                  {filter.toUpperCase()} ({chatCounts[filter]})
+                </Button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent className="p-0 overflow-y-auto h-[calc(100%-60px)]">
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            ) : chats.length === 0 ? (
+            ) : filteredChats.length === 0 ? (
               <p className="text-center text-muted-foreground py-8 text-sm">No chats</p>
             ) : (
               <div className="divide-y divide-border">
-                {chats.map((chat) => (
+                {filteredChats.map((chat) => (
                   <button
                     key={chat.id}
                     onClick={() => setSelectedChat(chat)}
@@ -347,15 +373,27 @@ export default function SupportManager() {
                           ? 'bg-primary/20 text-primary'
                           : msg.sender_type === 'telegram'
                           ? 'bg-blue-500/20 text-blue-400'
+                          : msg.message_type === 'order'
+                          ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30'
                           : 'bg-zinc-800 text-foreground'
                       }`}
                     >
                       {msg.sender_type !== 'admin' && (
                         <p className="text-[10px] text-muted-foreground mb-1">
-                          {msg.sender_type === 'telegram' ? '📱 Via Telegram' : '👤 User'}
+                          {msg.sender_type === 'telegram'
+                            ? '📱 Via Telegram'
+                            : msg.message_type === 'order'
+                            ? '🧾 Order Intake'
+                            : '👤 User'}
                         </p>
                       )}
                       <p className="whitespace-pre-wrap">{msg.message}</p>
+                      {msg.message_type === 'order' && (
+                        <p className="text-[10px] text-amber-100 mt-1 flex items-center gap-1">
+                          <ClipboardList className="w-3 h-3" />
+                          Routed from support orders tab
+                        </p>
+                      )}
                       {msg.file_url && (
                         <img src={msg.file_url} alt="attachment" className="mt-2 rounded max-w-full" />
                       )}

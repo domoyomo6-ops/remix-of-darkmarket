@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Minus, Maximize2, Bitcoin, Loader2, Users } from 'lucide-react';
+import { MessageCircle, X, Send, Minus, Maximize2, Bitcoin, Loader2, Users, ClipboardList, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,12 +24,6 @@ interface Chat {
   subject: string | null;
   created_at: string;
 }
-interface Order {
-  id: string;
-  items: string[];
-  status: 'pending' | 'preparing' | 'delivered';
-  created_at: string;
-}
 export default function SupportChatBox() {
   const {
     user
@@ -45,8 +39,6 @@ export default function SupportChatBox() {
   const [supportStatus, setSupportStatus] = useState<'open' | 'closed' | 'busy'>('open');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Orders
-  const [orders, setOrders] = useState<Order[]>([]);
   const [newOrderText, setNewOrderText] = useState('');
 
   // Drag state
@@ -166,16 +158,42 @@ export default function SupportChatBox() {
     setUnreadCount(0);
     setHasNewMessage(false);
   };
-  const addManualOrder = () => {
+  const addManualOrder = async () => {
     if (!newOrderText.trim()) return;
-    const newOrder: Order = {
-      id: (Math.random() * 100000).toFixed(0),
-      items: newOrderText.split(',').map(i => i.trim()),
-      status: 'pending',
-      created_at: new Date().toISOString()
-    };
-    setOrders([newOrder, ...orders]);
-    setNewOrderText('');
+    if (!user) return;
+    setSending(true);
+
+    let currentChat = chat;
+    if (!currentChat) {
+      currentChat = await createChat();
+      if (!currentChat) {
+        setSending(false);
+        return;
+      }
+    }
+
+    const orderItems = newOrderText
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .join(', ');
+
+    const { error } = await supabase.from('support_messages').insert({
+      chat_id: currentChat.id,
+      sender_id: user.id,
+      sender_type: 'user',
+      message_type: 'order',
+      message: `Order: ${orderItems}`
+    });
+
+    if (error) {
+      toast.error('Failed to send order');
+    } else {
+      setNewOrderText('');
+      setUnreadCount(0);
+      setHasNewMessage(false);
+    }
+    setSending(false);
   };
   const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([], {
     hour: '2-digit',
@@ -186,6 +204,12 @@ export default function SupportChatBox() {
     closed: 'bg-red-500',
     busy: 'bg-amber-500'
   };
+  const orderMessages = messages.filter(message => message.message_type === 'order');
+  const formatOrderItems = (message: string) => {
+    const clean = message.replace(/^Order:\s*/i, '');
+    return clean.split(',').map(item => item.trim()).filter(Boolean);
+  };
+
   if (!user) return null;
   return <>
       <button 
@@ -229,11 +253,21 @@ export default function SupportChatBox() {
                   💬 Chat {unreadCount > 0 && <span className="ml-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{unreadCount}</span>}
                 </TabsTrigger>
                 <TabsTrigger value="exchange" className="flex-1 font-mono text-xs"><Bitcoin className="w-3 h-3 mr-1" /> Exchange</TabsTrigger>
-                <TabsTrigger value="orders" className="flex-1 font-mono text-xs">🍔 Orders</TabsTrigger>
+                <TabsTrigger value="orders" className="flex-1 font-mono text-xs"><ClipboardList className="w-3 h-3 mr-1" /> Orders</TabsTrigger>
               </TabsList>
 
               {/* CHAT */}
               <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-0">
+                <div className="px-4 py-3 border-b border-primary/20 bg-black/70">
+                  <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${statusColors[supportStatus]}`} />
+                      <span>Support status: {supportStatus}</span>
+                    </div>
+                    {chat && <span className="text-[10px] text-green-400">Chat ID: {chat.id.slice(0, 8)}…</span>}
+                  </div>
+                  <p className="text-[11px] text-green-300/80 mt-1">We keep your orders and messages in one thread so admins see everything instantly.</p>
+                </div>
                 <div className="flex-1 flex flex-col justify-end p-4 space-y-3">
                   {messages.length === 0 ? <div className="text-center text-muted-foreground text-sm py-8">
                       <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -252,8 +286,8 @@ export default function SupportChatBox() {
 
                 <div className="shrink-0 p-3 border-t border-primary/20 bg-zinc-900">
                   <div className="flex gap-2">
-                    <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Type a message..." className="flex-1 bg-black/50 border-primary/30 text-sm" />
-                    <Button onClick={sendMessage} disabled={sending || !newMessage.trim()} size="sm" className="px-3">
+                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder={supportStatus === 'closed' ? 'Support is currently closed' : 'Type a message...'} className="flex-1 bg-black/50 border-primary/30 text-sm" disabled={supportStatus === 'closed'} />
+                    <Button onClick={sendMessage} disabled={sending || !newMessage.trim() || supportStatus === 'closed'} size="sm" className="px-3">
                       {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </Button>
                   </div>
@@ -264,21 +298,41 @@ export default function SupportChatBox() {
               <TabsContent value="exchange" className="flex-1 m-0 p-0 overflow-hidden"><CryptoExchange /></TabsContent>
 
               {/* ORDERS */}
-              <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4 gap-2 bg-black/95">
+              <TabsContent value="orders" className="flex-1 flex flex-col m-0 p-4 gap-3 bg-black/95">
+                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-primary/30 bg-black/70">
+                  <div>
+                    <p className="text-xs font-mono text-green-300 flex items-center gap-2"><Sparkles className="w-3 h-3" /> Orders route straight to admin support.</p>
+                    <p className="text-[10px] text-muted-foreground">Keep details concise: items, size, quantity, and notes.</p>
+                  </div>
+                  <span className="text-[10px] text-green-400 font-mono">Visible to admins</span>
+                </div>
+
                 <textarea placeholder="Type your full order here, items separated by commas (e.g., Burger, Fries, Coke)" value={newOrderText} onChange={e => setNewOrderText(e.target.value)} className="flex-1 w-full px-4 py-3 text-white bg-black/90 border-2 border-primary rounded-lg resize-none font-mono text-sm placeholder:text-green-400 shadow-[0_0_20px_rgba(0,255,0,0.7)] focus:outline-none focus:ring-2 focus:ring-green-400" />
-                <button onClick={addManualOrder} className="px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition w-full mt-2">
-                  Add Order
+                <button onClick={addManualOrder} disabled={sending || !newOrderText.trim() || supportStatus === 'closed'} className="px-3 py-2 bg-primary text-white rounded hover:bg-primary/80 transition w-full mt-1 disabled:opacity-60 disabled:cursor-not-allowed">
+                  {sending ? 'Sending…' : 'Send Order to Admin'}
                 </button>
 
                 <div className="flex-1 grid grid-cols-2 gap-3 mt-2">
-                  {orders.length === 0 ? <div className="col-span-2 flex items-center justify-center text-sm text-green-400 font-mono bg-zinc-900 rounded-lg shadow-[0_0_10px_rgba(0,255,0,0.5)] p-4">
-                      No orders yet. Type your order above and click "Add Order".
-                    </div> : orders.map(order => <div key={order.id} className="p-3 border border-primary/40 rounded-lg bg-zinc-900 shadow-[0_0_10px_rgba(0,255,0,0.5)] flex flex-col justify-between">
-                        <p className="font-mono text-xs mb-1">Order ID: {order.id}</p>
-                        <p className="text-sm mb-1">Items: {order.items.join(', ')}</p>
-                        <span className={`px-2 py-1 rounded text-xs text-white ${order.status === 'pending' ? 'bg-amber-400' : order.status === 'preparing' ? 'bg-blue-400' : 'bg-green-500'}`}>{order.status.toUpperCase()}</span>
-                        <p className="text-[10px] text-green-400 mt-1 text-right">{new Date(order.created_at).toLocaleString()}</p>
-                      </div>)}
+                  {orderMessages.length === 0 ? <div className="col-span-2 flex items-center justify-center text-sm text-green-400 font-mono bg-zinc-900 rounded-lg shadow-[0_0_10px_rgba(0,255,0,0.5)] p-4">
+                      No orders yet. Send one above and it will appear here.
+                    </div> : orderMessages.map(order => {
+                      const items = formatOrderItems(order.message);
+                      return (
+                        <div key={order.id} className="p-3 border border-primary/40 rounded-lg bg-gradient-to-br from-zinc-900 to-black shadow-[0_0_10px_rgba(0,255,0,0.5)] flex flex-col justify-between">
+                          <p className="font-mono text-xs mb-1">Order Ref: {order.id.slice(0, 6)}…</p>
+                          <ul className="text-sm mb-2 space-y-1">
+                            {items.length === 0 ? <li className="text-muted-foreground">No items listed.</li> : items.map((item, idx) => (
+                              <li key={`${order.id}-${idx}`} className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <span className="px-2 py-1 rounded text-xs text-white bg-amber-400/90 w-fit">QUEUED</span>
+                          <p className="text-[10px] text-green-400 mt-2 text-right">{formatTime(order.created_at)}</p>
+                        </div>
+                      );
+                    })}
                 </div>
               </TabsContent>
             </Tabs>}
