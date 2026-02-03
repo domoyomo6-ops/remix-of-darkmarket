@@ -41,12 +41,7 @@ function AbyssRings() {
       {rings.map((ring, index) => (
         <mesh key={index} position={[0, 0, ring.z]} rotation={[Math.PI / 2.2, 0, ring.rotation]}>
           <torusGeometry args={[ring.radius, ring.thickness, 16, 60]} />
-          <meshBasicMaterial
-            color="#0ea5e9"
-            transparent
-            opacity={0.2}
-            blending={THREE.AdditiveBlending}
-          />
+          <meshBasicMaterial color="#0ea5e9" transparent opacity={0.15} />
         </mesh>
       ))}
     </group>
@@ -58,32 +53,27 @@ function AbyssGrid() {
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.position.z = (state.clock.elapsedTime * 3.4) % 18;
+      meshRef.current.position.z = (state.clock.elapsedTime * 2.8) % 16;
     }
   });
 
   return (
     <mesh ref={meshRef} rotation={[-Math.PI / 2.1, 0, 0]} position={[0, -4, 0]}>
       <planeGeometry args={[80, 80, 40, 40]} />
-      <meshBasicMaterial
-        color="#22d3ee"
-        wireframe
-        transparent
-        opacity={0.16}
-        blending={THREE.AdditiveBlending}
-      />
+      <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.12} />
     </mesh>
   );
 }
 
 function AbyssParticles() {
   const pointsRef = useRef<THREE.Points>(null);
+
   const particles = useMemo(() => {
-    const positions = new Float32Array(900 * 3);
-    for (let i = 0; i < 900; i += 1) {
-      positions[i * 3] = (Math.random() - 0.5) * 36;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 28;
-      positions[i * 3 + 2] = -Math.random() * 80;
+    const positions = new Float32Array(600 * 3);
+    for (let i = 0; i < 600; i += 1) {
+      positions[i * 3] = (Math.random() - 0.5) * 32;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 24;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 70;
     }
     return positions;
   }, []);
@@ -108,16 +98,9 @@ function AbyssParticles() {
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={900} array={particles} itemSize={3} />
+        <bufferAttribute attach="attributes-position" count={600} array={particles} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial
-        color="#38bdf8"
-        size={0.08}
-        transparent
-        opacity={0.6}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-      />
+      <pointsMaterial color="#38bdf8" size={0.08} transparent opacity={0.45} sizeAttenuation />
     </points>
   );
 }
@@ -151,57 +134,22 @@ function AbyssGlows() {
       {glows.map((glow, index) => (
         <mesh key={index} position={glow.position} scale={glow.scale}>
           <sphereGeometry args={[0.5, 16, 16]} />
-          <meshBasicMaterial
-            color="#22d3ee"
-            transparent
-            opacity={0.25}
-            blending={THREE.AdditiveBlending}
-          />
+          <meshBasicMaterial color="#22d3ee" transparent opacity={0.2} />
         </mesh>
       ))}
     </group>
   );
 }
 
-function AbyssTunnel() {
-  const groupRef = useRef<THREE.Group>(null);
-  const segments = useMemo(
-    () =>
-      Array.from({ length: 6 }, (_, index) => ({
-        position: [0, 0, -index * 12] as [number, number, number],
-        rotation: Math.random() * Math.PI,
-      })),
-    []
-  );
-
-  useFrame((state, delta) => {
-    if (!groupRef.current) return;
-    groupRef.current.children.forEach((segment, index) => {
-      segment.position.z += delta * 6.5;
-      segment.rotation.z += delta * 0.08;
-      if (segment.position.z > 6) {
-        segment.position.z = -72;
-        segment.rotation.z = segments[index].rotation;
-      }
-    });
+function CameraRig() {
+  useFrame((state) => {
+    const { camera, pointer } = state;
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * 2.4, 0.06);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, pointer.y * 1.6, 0.06);
+    camera.lookAt(0, 0, -18);
   });
 
-  return (
-    <group ref={groupRef}>
-      {segments.map((segment, index) => (
-        <mesh key={index} position={segment.position} rotation={[0, 0, segment.rotation]}>
-          <cylinderGeometry args={[16, 16, 12, 36, 1, true]} />
-          <meshBasicMaterial
-            color="#0f172a"
-            wireframe
-            transparent
-            opacity={0.2}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
+  return null;
 }
 
 function AbyssBeams() {
@@ -267,17 +215,13 @@ function CameraRig() {
 export default function Scene3D() {
   return (
     <div className="absolute inset-0 -z-10">
-      <Canvas camera={{ position: [0, 0.5, 7], fov: 62 }} style={{ background: 'transparent' }}>
-        <fog attach="fog" args={['#05060b', 6, 58]} />
-        <ambientLight intensity={0.3} />
-        <directionalLight position={[4, 6, 6]} intensity={0.6} color="#38bdf8" />
-        <pointLight position={[-6, 2, 4]} intensity={0.8} color="#0ea5e9" />
+      <Canvas camera={{ position: [0, 0.5, 6], fov: 60 }} style={{ background: 'transparent' }}>
+        <fog attach="fog" args={['#05060b', 8, 48]} />
+        <ambientLight intensity={0.35} />
         <AbyssDome />
-        <AbyssTunnel />
         <AbyssRings />
         <AbyssGrid />
         <AbyssParticles />
-        <AbyssBeams />
         <AbyssGlows />
         <CameraRig />
       </Canvas>
