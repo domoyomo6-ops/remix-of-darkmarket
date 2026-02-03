@@ -80,6 +80,16 @@ function AbyssParticles() {
 
   useFrame((state) => {
     if (pointsRef.current) {
+      const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i + 2] += 0.25;
+        if (positions[i + 2] > 6) {
+          positions[i + 2] = -80;
+          positions[i] = (Math.random() - 0.5) * 36;
+          positions[i + 1] = (Math.random() - 0.5) * 28;
+        }
+      }
+      pointsRef.current.geometry.attributes.position.needsUpdate = true;
       pointsRef.current.rotation.y = state.clock.elapsedTime * 0.05;
       pointsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.08;
     }
@@ -137,6 +147,66 @@ function CameraRig() {
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * 2.4, 0.06);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, pointer.y * 1.6, 0.06);
     camera.lookAt(0, 0, -18);
+  });
+
+  return null;
+}
+
+function AbyssBeams() {
+  const groupRef = useRef<THREE.Group>(null);
+  const beams = useMemo(
+    () =>
+      Array.from({ length: 12 }, () => ({
+        position: [
+          (Math.random() - 0.5) * 20,
+          (Math.random() - 0.5) * 12,
+          -Math.random() * 60,
+        ] as [number, number, number],
+        rotation: Math.random() * Math.PI,
+        scale: 1.5 + Math.random() * 2,
+      })),
+    []
+  );
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    groupRef.current.children.forEach((beam, index) => {
+      beam.position.z += delta * 4.5;
+      beam.rotation.z += delta * 0.2;
+      if (beam.position.z > 8) {
+        beam.position.z = -60;
+        beam.position.x = (Math.random() - 0.5) * 20;
+        beam.position.y = (Math.random() - 0.5) * 12;
+        beam.rotation.z = beams[index].rotation;
+      }
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {beams.map((beam, index) => (
+        <mesh key={index} position={beam.position} rotation={[0, 0, beam.rotation]} scale={beam.scale}>
+          <planeGeometry args={[0.2, 8]} />
+          <meshBasicMaterial
+            color="#38bdf8"
+            transparent
+            opacity={0.12}
+            blending={THREE.AdditiveBlending}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function CameraRig() {
+  useFrame((state) => {
+    const { camera, pointer } = state;
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * 2.4, 0.06);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, pointer.y * 1.6, 0.06);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, 6 + Math.sin(state.clock.elapsedTime * 0.2) * 0.6, 0.04);
+    camera.lookAt(0, 0, -22);
   });
 
   return null;
