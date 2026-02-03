@@ -68,7 +68,8 @@ export default function Accounts() {
 
       if (error) throw error;
 
-      if (data?.success) {
+      const result = data as { success?: boolean } | null;
+      if (result?.success) {
         toast({
           title: 'Purchase successful',
           description: 'Check your orders page.',
@@ -204,23 +205,23 @@ function UltraCard({
       onClick={onNavigate}
       style={style}
       className={`
-        relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer
+        relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer
         transition-transform duration-200 ease-out
         ${bg}
-        group
+        group border border-border/50
       `}
     >
-      {/* Neon Border */}
-      <div className="absolute inset-0 rounded-2xl pointer-events-none">
-        <div className="absolute inset-0 animate-spin-slow bg-gradient-to-r from-fuchsia-500 via-cyan-400 to-purple-600 opacity-70 blur-md" />
-        <div className="absolute inset-[2px] rounded-2xl bg-black/30" />
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 rounded-xl pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-[1px] rounded-xl bg-background/20" />
       </div>
 
       {/* Image */}
       {product.image_url && (
         <img
           src={product.image_url}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
       )}
 
@@ -231,23 +232,30 @@ function UltraCard({
       />
 
       {/* Price */}
-      <Badge className="absolute top-3 right-3 z-20 bg-red-500">
+      <Badge className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground">
         ${product.price.toFixed(2)}
       </Badge>
+
+      {/* Brand name fallback */}
+      {!product.image_url && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-foreground font-semibold text-lg">{product.brand || product.title}</span>
+        </div>
+      )}
 
       {/* BUY BUTTON */}
       <button
         onClick={(e) => {
-          e.stopPropagation(); // 🔥 keeps navigation intact
+          e.stopPropagation();
           onBuy();
         }}
         className="
           absolute bottom-3 left-1/2 -translate-x-1/2 z-30
           px-5 py-1.5 rounded-full
-          bg-black/70 backdrop-blur
-          text-white text-xs font-bold tracking-wide
-          border border-white/20
-          hover:bg-white hover:text-black
+          bg-background/80 backdrop-blur
+          text-foreground text-xs font-semibold tracking-wide
+          border border-border
+          hover:bg-primary hover:text-primary-foreground hover:border-primary
           transition-all
         "
       >
@@ -256,8 +264,8 @@ function UltraCard({
 
       {/* Purchasing Overlay */}
       {purchasing && (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-40">
-          <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-40">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       )}
     </div>

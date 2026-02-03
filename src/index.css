@@ -1,100 +1,101 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Darknet Terminal 3D Design System - All colors MUST be HSL */
+/* Professional Dark Design System - Sophisticated & Minimal */
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 142 70% 45%;
+    --background: 220 20% 4%;
+    --foreground: 210 40% 92%;
 
-    --card: 0 0% 3%;
-    --card-foreground: 142 70% 45%;
+    --card: 220 20% 6%;
+    --card-foreground: 210 40% 90%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 142 70% 45%;
+    --popover: 220 20% 8%;
+    --popover-foreground: 210 40% 90%;
 
-    --primary: 142 70% 45%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 220 20% 4%;
 
-    --secondary: 142 70% 8%;
-    --secondary-foreground: 142 70% 45%;
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 210 40% 85%;
 
-    --muted: 142 20% 12%;
-    --muted-foreground: 142 40% 35%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 210 20% 55%;
 
-    --accent: 142 70% 15%;
-    --accent-foreground: 142 70% 50%;
+    --accent: 210 80% 20%;
+    --accent-foreground: 210 100% 70%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 142 50% 20%;
-    --input: 142 50% 15%;
-    --ring: 142 70% 45%;
+    --border: 220 15% 18%;
+    --input: 220 15% 12%;
+    --ring: 210 100% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Terminal theme colors */
-    --terminal: 142 70% 45%;
-    --terminal-dim: 142 40% 25%;
-    --terminal-glow: 142 100% 50%;
-    --terminal-bg: 0 0% 2%;
-    --surface: 0 0% 5%;
-    --surface-elevated: 0 0% 8%;
+    /* Professional theme colors */
+    --terminal: 210 100% 60%;
+    --terminal-dim: 210 40% 35%;
+    --terminal-glow: 210 100% 65%;
+    --terminal-bg: 220 20% 3%;
+    --surface: 220 20% 7%;
+    --surface-elevated: 220 20% 10%;
     
     /* Status colors */
-    --success: 142 76% 36%;
-    --warning: 45 93% 47%;
-    --error: 0 62% 50%;
+    --success: 160 60% 45%;
+    --warning: 40 90% 50%;
+    --error: 0 70% 50%;
 
-    --sidebar-background: 0 0% 2%;
-    --sidebar-foreground: 142 70% 45%;
-    --sidebar-primary: 142 70% 45%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 142 70% 15%;
-    --sidebar-accent-foreground: 142 70% 50%;
-    --sidebar-border: 142 50% 20%;
-    --sidebar-ring: 142 70% 45%;
+    --sidebar-background: 220 20% 4%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 220 20% 4%;
+    --sidebar-accent: 210 80% 18%;
+    --sidebar-accent-foreground: 210 100% 70%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 210 100% 55%;
     
-    --chart-1: 142 70% 45%;
-    --chart-2: 142 50% 35%;
-    --chart-3: 142 30% 25%;
-    --chart-4: 45 93% 47%;
-    --chart-5: 0 62% 50%;
+    --chart-1: 210 100% 60%;
+    --chart-2: 200 80% 50%;
+    --chart-3: 190 60% 40%;
+    --chart-4: 40 90% 50%;
+    --chart-5: 0 70% 50%;
 
-    --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     
-    --shadow-terminal: 0 0 20px hsl(142 100% 50% / 0.15);
-    --shadow-glow: 0 0 40px hsl(142 100% 50% / 0.25);
+    --shadow-subtle: 0 4px 24px hsl(220 50% 5% / 0.5);
+    --shadow-glow: 0 0 30px hsl(210 100% 50% / 0.15);
     
     /* 3D perspective */
-    --perspective: 1000px;
+    --perspective: 1200px;
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 142 70% 45%;
-    --card: 0 0% 3%;
-    --card-foreground: 142 70% 45%;
-    --popover: 0 0% 5%;
-    --popover-foreground: 142 70% 45%;
-    --primary: 142 70% 45%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 142 70% 8%;
-    --secondary-foreground: 142 70% 45%;
-    --muted: 142 20% 12%;
-    --muted-foreground: 142 40% 35%;
-    --accent: 142 70% 15%;
-    --accent-foreground: 142 70% 50%;
-    --destructive: 0 62% 50%;
+    --background: 220 20% 4%;
+    --foreground: 210 40% 92%;
+    --card: 220 20% 6%;
+    --card-foreground: 210 40% 90%;
+    --popover: 220 20% 8%;
+    --popover-foreground: 210 40% 90%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 220 20% 4%;
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 210 40% 85%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 210 20% 55%;
+    --accent: 210 80% 20%;
+    --accent-foreground: 210 100% 70%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 142 50% 20%;
-    --input: 142 50% 15%;
-    --ring: 142 70% 45%;
+    --border: 220 15% 18%;
+    --input: 220 15% 12%;
+    --ring: 210 100% 55%;
   }
 }
 
@@ -105,9 +106,19 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-mono);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.01em;
     perspective: var(--perspective);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
@@ -329,7 +340,7 @@
   }
 }
 
-/* Terminal-style background effects */
+/* Professional subtle background effects */
 body::before {
   content: '';
   position: fixed;
@@ -337,93 +348,67 @@ body::before {
   pointer-events: none;
   z-index: -1;
   background: 
-    /* Scanlines */
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      hsl(142 76% 36% / 0.03) 2px,
-      hsl(142 76% 36% / 0.03) 4px
-    ),
-    /* Grid pattern */
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 50px,
-      hsl(142 76% 36% / 0.02) 50px,
-      hsl(142 76% 36% / 0.02) 51px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 50px,
-      hsl(142 76% 36% / 0.02) 50px,
-      hsl(142 76% 36% / 0.02) 51px
-    ),
-    /* Radial glow from center */
-    radial-gradient(
-      ellipse at 50% 0%,
-      hsl(142 76% 36% / 0.1) 0%,
-      transparent 60%
-    ),
-    /* Corner vignette */
+    /* Subtle noise texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"),
+    /* Subtle vignette */
     radial-gradient(
       ellipse at center,
       transparent 0%,
-      hsl(0 0% 0% / 0.5) 100%
+      hsl(220 20% 4% / 0.6) 100%
+    ),
+    /* Subtle top glow */
+    radial-gradient(
+      ellipse at 50% -20%,
+      hsl(210 100% 50% / 0.04) 0%,
+      transparent 50%
     );
+  opacity: 0.4;
 }
 
-/* CRT flicker animation */
-@keyframes terminal-flicker {
-  0%, 100% { opacity: 1; }
-  92% { opacity: 1; }
-  93% { opacity: 0.95; }
-  94% { opacity: 1; }
+/* Subtle ambient animation */
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.45; }
 }
 
-body {
-  animation: terminal-flicker 8s infinite;
+body::before {
+  animation: ambient-pulse 12s ease-in-out infinite;
 }
 
-/* Logo glow animation */
+/* Professional logo glow - subtle */
 @keyframes logo-glow {
   0%, 100% {
     text-shadow: 
-      0 0 5px hsl(142 70% 45% / 0.8),
-      0 0 10px hsl(142 70% 45% / 0.6),
-      0 0 20px hsl(142 70% 45% / 0.4),
-      0 0 40px hsl(142 70% 45% / 0.2);
+      0 0 20px hsl(210 100% 60% / 0.3),
+      0 0 40px hsl(210 100% 60% / 0.1);
     filter: brightness(1);
   }
   50% {
     text-shadow: 
-      0 0 10px hsl(142 70% 45% / 1),
-      0 0 20px hsl(142 70% 45% / 0.8),
-      0 0 40px hsl(142 70% 45% / 0.6),
-      0 0 80px hsl(142 70% 45% / 0.4);
-    filter: brightness(1.2);
+      0 0 30px hsl(210 100% 60% / 0.4),
+      0 0 60px hsl(210 100% 60% / 0.15);
+    filter: brightness(1.05);
   }
 }
 
 .animate-logo-glow {
-  animation: logo-glow 2s ease-in-out infinite;
+  animation: logo-glow 4s ease-in-out infinite;
 }
 
-/* Pulse glow animation */
+/* Subtle pulse glow */
 @keyframes pulse-glow {
   0%, 100% { 
-    box-shadow: 0 0 20px hsl(142 70% 45% / 0.3);
-    border-color: hsl(142 70% 45% / 0.3);
+    box-shadow: 0 0 15px hsl(210 100% 60% / 0.15);
+    border-color: hsl(210 100% 60% / 0.2);
   }
   50% { 
-    box-shadow: 0 0 40px hsl(142 70% 45% / 0.5);
-    border-color: hsl(142 70% 45% / 0.5);
+    box-shadow: 0 0 25px hsl(210 100% 60% / 0.25);
+    border-color: hsl(210 100% 60% / 0.3);
   }
 }
 
 .animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
 /* Blink cursor */
