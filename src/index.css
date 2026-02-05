@@ -80,6 +80,11 @@
     
     --perspective: 1500px;
   }
+ 
+   /* Radial vignette gradient */
+   .bg-radial-vignette {
+     background: radial-gradient(ellipse at center, transparent 0%, transparent 40%, hsl(0 0% 0% / 0.6) 100%);
+   }
 
   .dark {
     --background: 0 0% 2%;
@@ -760,3 +765,9 @@ body {
 .animate-scan {
   animation: scan 1s ease-in-out infinite;
 }
+ 
+ /* Parallax smooth transitions */
+ .parallax-layer {
+   will-change: transform;
+   backface-visibility: hidden;
+ }
