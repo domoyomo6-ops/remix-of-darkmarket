@@ -1,14 +1,12 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Terminal, Zap, Package, ArrowRight, Bell, Sparkles, Clock, TrendingUp, Shield, Cpu, Wifi, Database, Skull, Crown } from 'lucide-react';
+import { Terminal, Zap, Package, ArrowRight, Bell, Sparkles, Clock, TrendingUp, Shield, Wifi, Database, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import MainLayout from '@/components/layout/MainLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { TerminalWindow, GlitchText, Text3D, CommandPrompt, HackingProgress, RandomDataStream } from '@/components/ui/terminal-effects';
-
-const Scene3D = lazy(() => import('@/components/Scene3D'));
 
 interface Product {
   id: string;
@@ -81,87 +79,6 @@ export default function Homepage() {
 
   return (
     <MainLayout>
-      {/* ULTRA BACKGROUND LAYER SYSTEM */}
-      
-      {/* Layer 1: Deep space gradient */}
-      <div className="fixed inset-0 -z-50 bg-gradient-to-br from-black via-background to-black" />
-      
-      {/* Layer 2: Animated gradient orbs */}
-      <div className="fixed inset-0 -z-40 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-500/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/10 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
-      
-      {/* Layer 3: Grid overlay */}
-      <div className="fixed inset-0 -z-30" style={{
-        backgroundImage: `
-          linear-gradient(rgba(0, 255, 128, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0, 255, 128, 0.03) 1px, transparent 1px)
-        `,
-        backgroundSize: '50px 50px'
-      }} />
-      
-      {/* Layer 4: Diagonal lines pattern */}
-      <div className="fixed inset-0 -z-25 opacity-[0.02]" style={{
-        backgroundImage: `repeating-linear-gradient(
-          45deg,
-          transparent,
-          transparent 35px,
-          hsl(var(--primary)) 35px,
-          hsl(var(--primary)) 36px
-        )`
-      }} />
-      
-      {/* Layer 5: 3D Scene */}
-      <div className="fixed inset-0 -z-20">
-        <Suspense fallback={null}>
-          <Scene3D />
-        </Suspense>
-      </div>
-      
-      {/* Layer 6: Noise texture overlay */}
-      <div className="fixed inset-0 -z-15 opacity-[0.15] pointer-events-none" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
-      }} />
-      
-      {/* Layer 7: Vignette */}
-      <div className="fixed inset-0 -z-10 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.6) 100%)'
-      }} />
-      
-      {/* Layer 8: Floating art elements */}
-      <div className="fixed inset-0 -z-5 pointer-events-none overflow-hidden">
-        {/* Basquiat-style crowns */}
-        <Crown className="absolute top-[15%] right-[10%] w-16 h-16 text-yellow-400/20 animate-float" style={{ animationDuration: '8s' }} />
-        <Crown className="absolute bottom-[25%] left-[8%] w-12 h-12 text-yellow-500/15 animate-float" style={{ animationDuration: '12s', animationDelay: '2s' }} />
-        <Crown className="absolute top-[60%] right-[20%] w-10 h-10 text-orange-400/15 animate-float" style={{ animationDuration: '10s', animationDelay: '4s' }} />
-        
-        {/* Skulls */}
-        <Skull className="absolute top-[30%] left-[15%] w-14 h-14 text-primary/10 animate-float" style={{ animationDuration: '9s', animationDelay: '1s' }} />
-        <Skull className="absolute bottom-[40%] right-[12%] w-10 h-10 text-red-500/10 animate-float" style={{ animationDuration: '11s', animationDelay: '3s' }} />
-        
-        {/* Geometric shapes */}
-        <div className="absolute top-[20%] left-[30%] w-20 h-20 border-2 border-primary/10 rotate-45 animate-spin-slow" />
-        <div className="absolute bottom-[30%] right-[25%] w-16 h-16 border border-cyan-400/10 animate-spin-slow" style={{ animationDirection: 'reverse' }} />
-        <div className="absolute top-[50%] left-[5%] w-24 h-24 border border-purple-500/10 rounded-full animate-pulse" />
-        
-        {/* Abstract lines - Warhol/Basquiat style */}
-        <svg className="absolute top-[10%] left-[40%] w-32 h-32 opacity-10" viewBox="0 0 100 100">
-          <path d="M10,50 Q30,20 50,50 T90,50" stroke="hsl(var(--primary))" fill="none" strokeWidth="2" className="animate-dash" />
-          <circle cx="50" cy="50" r="3" fill="hsl(var(--primary))" />
-        </svg>
-        
-        <svg className="absolute bottom-[15%] right-[35%] w-40 h-40 opacity-10" viewBox="0 0 100 100">
-          <path d="M20,80 L50,20 L80,80 Z" stroke="#FFD700" fill="none" strokeWidth="2" />
-          <circle cx="50" cy="20" r="5" fill="#FFD700" className="animate-pulse" />
-        </svg>
-        
-        {/* Dollar signs - Warhol money art */}
-        <span className="absolute top-[45%] right-[5%] text-6xl font-bold text-primary/5 animate-float" style={{ animationDuration: '15s' }}>$</span>
-        <span className="absolute bottom-[20%] left-[25%] text-4xl font-bold text-yellow-400/5 animate-float" style={{ animationDuration: '13s', animationDelay: '5s' }}>$</span>
-      </div>
-
       <div className="min-h-screen relative">
         {/* Moving scan line */}
         <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden opacity-30">
