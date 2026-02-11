@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Loader2, RotateCcw, ShoppingCart, FileText } from 'lucide-react';
+import { Loader2, RotateCcw, ShoppingCart, FileText, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { addToCart } from '@/pages/Cart';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,16 +81,9 @@ export default function Logz() {
     }
   };
 
-  const addToCart = (productId: string) => {
-    if (cart.length >= 100) {
-      toast({
-        title: "Cart full",
-        description: "Max 100 items per cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setCart([...cart, productId]);
+  const addToCartHandler = (productId: string) => {
+    addToCart(productId);
+    toast({ title: 'Added to cart' });
   };
 
   const addMultiple = (count: number) => {
@@ -102,7 +96,9 @@ export default function Logz() {
       });
       return;
     }
+    available.forEach(p => addToCart(p.id));
     setCart([...cart, ...available.map(p => p.id)]);
+    toast({ title: `Added ${available.length} items to cart` });
   };
 
   const resetFilters = () => {
@@ -192,10 +188,19 @@ export default function Logz() {
                     <td className="p-3 text-foreground">{product.brand || '-'}</td>
                     <td className="p-3 text-foreground">{product.bank || '-'}</td>
                     <td className="p-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                       <div className="flex items-center justify-end gap-2">
                         <Badge variant="destructive" className="font-mono">
                           ${product.price.toFixed(2)}
                         </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10 text-xs"
+                          onClick={() => addToCartHandler(product.id)}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Cart
+                        </Button>
                         <Button
                           size="sm"
                           variant="secondary"

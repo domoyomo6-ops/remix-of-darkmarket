@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt, FileText, UserCircle } from 'lucide-react';
+import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt, FileText, UserCircle, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +17,23 @@ export default function Header() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const updateCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('hell5tar_cart') || '[]');
+        setCartCount(cart.length);
+      } catch { setCartCount(0); }
+    };
+    updateCount();
+    window.addEventListener('cart-update', updateCount);
+    window.addEventListener('storage', updateCount);
+    return () => {
+      window.removeEventListener('cart-update', updateCount);
+      window.removeEventListener('storage', updateCount);
+    };
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -130,7 +147,23 @@ export default function Header() {
           <NavLinks />
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Cart icon */}
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded border border-primary/30 hover:border-primary/50 hover:bg-primary/10 btn-3d relative"
+              onClick={() => navigate('/cart')}
+            >
+              <ShoppingCart className="w-4 h-4 text-primary" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center animate-pulse">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Button>
+          )}
           {user && <WalletBalance />}
           {user ? (
             <DropdownMenu>
