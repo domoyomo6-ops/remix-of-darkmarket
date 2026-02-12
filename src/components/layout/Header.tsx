@@ -198,6 +198,13 @@ export default function Header() {
                   <Receipt className="w-4 h-4 mr-2" />
                   TRANSACTIONS
                 </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => navigate('/settings')}
+                  className="font-mono text-primary/80 hover:text-primary focus:text-primary focus:bg-primary/10"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  SETTINGS
+                </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem 
                     onClick={() => navigate('/admin')}
