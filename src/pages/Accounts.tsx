@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import MainLayout from '@/components/layout/MainLayout';
 import { useNavigate } from 'react-router-dom';
+import { toast as sonnerToast } from 'sonner';
 
 interface Product {
   id: string;
@@ -34,6 +35,18 @@ const fallbackColors = [
 const getColor = (_brand: string | null, i: number) =>
   fallbackColors[i % fallbackColors.length];
 
+const addToCart = (product: Product) => {
+  const cart = JSON.parse(localStorage.getItem('hell5tar_cart') || '[]');
+  if (cart.find((item: any) => item.id === product.id)) {
+    sonnerToast.info('Already in cart');
+    return;
+  }
+  cart.push({ id: product.id, title: product.title, price: product.price, brand: product.brand, type: 'accounts' });
+  localStorage.setItem('hell5tar_cart', JSON.stringify(cart));
+  window.dispatchEvent(new Event('cart-update'));
+  sonnerToast.success(`${product.brand || product.title} added to cart`);
+};
+
 export default function Accounts() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -42,7 +55,6 @@ export default function Accounts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [brandFilter, setBrandFilter] = useState('all');
-  const [purchasing, setPurchasing] = useState<string | null>(null);
 
   useEffect(() => {
     supabase
@@ -56,35 +68,6 @@ export default function Accounts() {
         setLoading(false);
       });
   }, []);
-
-  const handlePurchase = async (productId: string) => {
-    if (!user) return;
-
-    setPurchasing(productId);
-    try {
-      const { data, error } = await supabase.rpc('purchase_with_wallet', {
-        p_product_id: productId,
-      });
-
-      if (error) throw error;
-
-      const result = data as { success?: boolean } | null;
-      if (result?.success) {
-        toast({
-          title: 'Purchase successful',
-          description: 'Check your orders page.',
-        });
-      }
-    } catch (e: any) {
-      toast({
-        title: 'Purchase failed',
-        description: e.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setPurchasing(null);
-    }
-  };
 
   const filtered =
     brandFilter === 'all'
@@ -135,9 +118,8 @@ export default function Accounts() {
               key={p.id}
               product={p}
               bg={getColor(p.brand, i)}
-              purchasing={purchasing === p.id}
               onNavigate={() => navigate(`/accounts/${p.id}`)}
-              onBuy={() => handlePurchase(p.id)}
+              onAddToCart={() => addToCart(p)}
             />
           ))}
         </div>
@@ -146,22 +128,16 @@ export default function Accounts() {
   );
 }
 
-/* ========================== */
-/* ===== ULTRA CARD ========= */
-/* ========================== */
-
 function UltraCard({
   product,
   bg,
-  purchasing,
   onNavigate,
-  onBuy,
+  onAddToCart,
 }: {
   product: Product;
   bg: string;
-  purchasing: boolean;
   onNavigate: () => void;
-  onBuy: () => void;
+  onAddToCart: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<any>({});
@@ -177,20 +153,11 @@ function UltraCard({
     const ry = ((x / r.width) - 0.5) * 18;
 
     setStyle({
-      transform: `
-        perspective(1200px)
-        rotateX(${rx}deg)
-        rotateY(${ry}deg)
-        scale(1.08)
-      `,
+      transform: `perspective(1200px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.08)`,
     });
 
     setGlow({
-      background: `radial-gradient(
-        600px at ${x}px ${y}px,
-        rgba(255,255,255,.35),
-        transparent 60%
-      )`,
+      background: `radial-gradient(600px at ${x}px ${y}px, rgba(255,255,255,.35), transparent 60%)`,
     });
   };
 
@@ -204,20 +171,13 @@ function UltraCard({
       }}
       onClick={onNavigate}
       style={style}
-      className={`
-        relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer
-        transition-transform duration-200 ease-out
-        ${bg}
-        group border border-border/50
-      `}
+      className={`relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer transition-transform duration-200 ease-out ${bg} group border border-border/50`}
     >
-      {/* Subtle gradient overlay */}
       <div className="absolute inset-0 rounded-xl pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60" />
         <div className="absolute inset-[1px] rounded-xl bg-background/20" />
       </div>
 
-      {/* Image */}
       {product.image_url && (
         <img
           src={product.image_url}
@@ -225,51 +185,28 @@ function UltraCard({
         />
       )}
 
-      {/* Cursor Light */}
-      <div
-        className="absolute inset-0 mix-blend-overlay pointer-events-none"
-        style={glow}
-      />
+      <div className="absolute inset-0 mix-blend-overlay pointer-events-none" style={glow} />
 
-      {/* Price */}
       <Badge className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground">
         ${product.price.toFixed(2)}
       </Badge>
 
-      {/* Brand name fallback */}
       {!product.image_url && (
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-foreground font-semibold text-lg">{product.brand || product.title}</span>
         </div>
       )}
 
-      {/* BUY BUTTON */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onBuy();
-        }}
-        className="
-          absolute bottom-3 left-1/2 -translate-x-1/2 z-30
-          px-5 py-1.5 rounded-full
-          bg-background/80 backdrop-blur
-          text-foreground text-xs font-semibold tracking-wide
-          border border-border
-          hover:bg-primary hover:text-primary-foreground hover:border-primary
-          transition-all
-        "
-      >
-        BUY
-      </button>
-
-      {/* Purchasing Overlay */}
-      {purchasing && (
-        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-40">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      )}
+      {/* ADD TO CART + BUY */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); onAddToCart(); }}
+          className="px-3 py-1.5 rounded-full bg-background/80 backdrop-blur text-foreground text-xs font-semibold tracking-wide border border-border hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all flex items-center gap-1"
+        >
+          <ShoppingCart className="w-3 h-3" />
+          CART
+        </button>
+      </div>
     </div>
   );
 }
-
-

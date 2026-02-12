@@ -29,6 +29,7 @@ const Homepage = lazy(() => import("./pages/Homepage"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
 const Transactions = lazy(() => import("./pages/Transactions"));
 const Cart = lazy(() => import("./pages/Cart"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 // Loading fallback component
 const RouteLoader = () => <div className="min-h-screen flex items-center justify-center bg-background">
@@ -92,6 +93,7 @@ function AppRoutes() {
           <Route path="/giftcards" element={<GiftCards />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
