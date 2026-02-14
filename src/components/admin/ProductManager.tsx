@@ -225,39 +225,120 @@ export default function ProductManager() {
     setBulkStockText(content);
   };
 
+  type ParsedStockLine = {
+    bin: string;
+    city: string;
+    state: string;
+    zip: string;
+    expire: string;
+    country: string;
+    card_type: string;
+    brand: string;
+    bank: string;
+    price: string;
+  };
+
+  const parseDelimitedLine = (line: string): ParsedStockLine | null => {
+    const delimiter = line.includes('|') ? '|' : ',';
+    const parts = line.split(delimiter).map((part) => part.trim());
+    if (parts.length < 9) {
+      return null;
+    }
+
+    const [bin = '', city = '', state = '', zip = '', expire = '', country = '', card_type = '', brand = '', bank = '', price = '0'] = parts;
+    return { bin, city, state, zip, expire, country, card_type, brand, bank, price };
+  };
+
+  const fieldAliases: Record<string, keyof ParsedStockLine> = {
+    bin: 'bin',
+    city: 'city',
+    state: 'state',
+    zip: 'zip',
+    zipcode: 'zip',
+    postal: 'zip',
+    expire: 'expire',
+    expiry: 'expire',
+    country: 'country',
+    cardtype: 'card_type',
+    card_type: 'card_type',
+    type: 'card_type',
+    brand: 'brand',
+    bank: 'bank',
+    price: 'price',
+  };
+
+  const parseLabelBlocks = (input: string): ParsedStockLine[] => {
+    const blocks = input
+      .split(/\n\s*\n/)
+      .map((block) => block.trim())
+      .filter(Boolean);
+
+    return blocks
+      .map((block) => {
+        const parsed: ParsedStockLine = {
+          bin: '',
+          city: '',
+          state: '',
+          zip: '',
+          expire: '',
+          country: '',
+          card_type: '',
+          brand: '',
+          bank: '',
+          price: '0',
+        };
+
+        block
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .forEach((line) => {
+            const [rawLabel, ...rawValue] = line.split(/[:=-]/);
+            if (!rawLabel || rawValue.length === 0) return;
+            const alias = rawLabel.toLowerCase().replace(/\s+/g, '');
+            const key = fieldAliases[alias];
+            if (!key) return;
+            parsed[key] = rawValue.join(':').trim();
+          });
+
+        return parsed.bin || parsed.bank || parsed.brand ? parsed : null;
+      })
+      .filter((item): item is ParsedStockLine => Boolean(item));
+  };
+
   const parseStockLines = (input: string) => {
     const rows = input
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean);
 
-    return rows.map((row, idx) => {
-      const delimiter = row.includes('|') ? '|' : ',';
-      const [bin = '', city = '', state = '', zip = '', expire = '', country = '', card_type = '', brand = '', bank = '', price = '0'] = row
-        .split(delimiter)
-        .map((part) => part.trim());
+    const parsedRows = rows
+      .map(parseDelimitedLine)
+      .filter((row): row is ParsedStockLine => Boolean(row));
 
-      return {
-        title: `${bank || brand || 'Stock'} ${bin || idx + 1}`,
-        description: `${brand || 'Card'} ${card_type || ''}`.trim() || null,
-        short_description: 'Buy',
-        price: Number(price) || 0,
-        category: 'assets' as const,
-        product_type: 'stock' as const,
-        image_url: null,
-        file_url: null,
-        is_active: true,
-        bin: bin || null,
-        city: city || null,
-        state: state || null,
-        zip: zip || null,
-        expire: expire || null,
-        country: country || null,
-        card_type: card_type || null,
-        brand: brand || null,
-        bank: bank || null,
-      };
-    });
+    const labelRows = parsedRows.length > 0 ? [] : parseLabelBlocks(input);
+    const normalizedRows = parsedRows.length > 0 ? parsedRows : labelRows;
+
+    return normalizedRows.map((row, idx) => ({
+      title: `${row.bank || row.brand || 'Stock'} ${row.bin || idx + 1}`,
+      description: `${row.brand || 'Card'} ${row.card_type || ''}`.trim() || null,
+      short_description: 'Buy',
+      price: Number(row.price) || 0,
+      category: 'assets' as const,
+      product_type: 'stock' as const,
+      image_url: null,
+      file_url: null,
+      is_active: true,
+      bin: row.bin || null,
+      city: row.city || null,
+      state: row.state || null,
+      zip: row.zip || null,
+      expire: row.expire || null,
+      country: row.country || null,
+      card_type: row.card_type || null,
+      brand: row.brand || null,
+      bank: row.bank || null,
+    }));
   };
 
   const handleBulkCreate = async () => {
@@ -267,6 +348,10 @@ export default function ProductManager() {
     }
 
     const parsedProducts = parseStockLines(bulkStockText);
+    if (parsedProducts.length === 0) {
+      toast.error('No valid stock listings found. Use CSV/pipe lines or label blocks (Bin: ..., City: ...).');
+      return;
+    }
     const { error } = await supabase.from('products').insert(parsedProducts);
     if (error) {
       toast.error('Failed to import stock lines');
@@ -377,7 +462,7 @@ export default function ProductManager() {
                   className="crt-input min-h-[120px]"
                   value={bulkStockText}
                   onChange={(e) => setBulkStockText(e.target.value)}
-                  placeholder="bin,city,state,zip,expire,country,card_type,brand,bank,price\nOR\nbin|city|state|zip|expire|country|card_type|brand|bank|price"
+                  placeholder="bin,city,state,zip,expire,country,card_type,brand,bank,price\nOR\nbin|city|state|zip|expire|country|card_type|brand|bank|price\nOR\nBin: 457173\nCity: Miami\nState: FL\nZip: 33101\nExpire: 12/27\nCountry: US\nCard Type: credit\nBrand: Visa\nBank: Chase\nPrice: 5"
                 />
                 <Button type="button" variant="outline" onClick={handleBulkCreate}>
                   Import Lines as Listings
