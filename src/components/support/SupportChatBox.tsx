@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import CryptoExchange from './CryptoExchange';
 
@@ -33,6 +34,7 @@ interface Chat {
 
 export default function SupportChatBox() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [chat, setChat] = useState<Chat | null>(null);
@@ -54,6 +56,7 @@ export default function SupportChatBox() {
 
   // DRAG EVENTS
   const onMouseDown = (e: React.MouseEvent) => {
+    if (isMobile) return;
     dragging.current = true;
     dragOffset.current = { x: e.clientX - position.x, y: e.clientY - position.y };
   };
@@ -73,6 +76,12 @@ export default function SupportChatBox() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    dragging.current = false;
+    setPosition({ x: 0, y: 0 });
+  }, [isMobile]);
 
   useEffect(() => {
     if (user) {
@@ -280,13 +289,15 @@ export default function SupportChatBox() {
       {isOpen && (
         <div
           ref={dragRef}
-          style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
-          className={`fixed top-0 left-0 z-50 select-none w-[380px] sm:w-[420px] ${isMinimized ? 'h-14' : 'h-[560px]'} transition-all`}
+          style={isMobile ? undefined : { transform: `translate(${position.x}px, ${position.y}px)` }}
+          className={`fixed z-50 select-none transition-all ${isMobile
+            ? `left-2 right-2 bottom-2 ${isMinimized ? 'h-14' : 'h-[min(560px,80dvh)]'}`
+            : `top-0 left-0 w-[380px] sm:w-[420px] ${isMinimized ? 'h-14' : 'h-[560px]'}`}`}
         >
           {/* Terminal Chrome Header */}
           <div
             onMouseDown={onMouseDown}
-            className="cursor-move flex items-center justify-between px-4 py-3 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border-b border-primary/30 rounded-t-xl"
+            className={`flex items-center justify-between px-4 py-3 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border-b border-primary/30 rounded-t-xl ${isMobile ? 'cursor-default' : 'cursor-move'}`}
           >
             <div className="flex items-center gap-3">
               {/* Window controls */}
