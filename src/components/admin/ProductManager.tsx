@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { Package, Plus, Edit, Trash2, X, Check, Loader2, Image, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,7 @@ export default function ProductManager() {
     brand: '',
     bank: '',
   });
+  const [bulkStockText, setBulkStockText] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -217,6 +218,66 @@ export default function ProductManager() {
     }
   };
 
+  const handleBulkFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const content = await file.text();
+    setBulkStockText(content);
+  };
+
+  const parseStockLines = (input: string) => {
+    const rows = input
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    return rows.map((row, idx) => {
+      const delimiter = row.includes('|') ? '|' : ',';
+      const [bin = '', city = '', state = '', zip = '', expire = '', country = '', card_type = '', brand = '', bank = '', price = '0'] = row
+        .split(delimiter)
+        .map((part) => part.trim());
+
+      return {
+        title: `${bank || brand || 'Stock'} ${bin || idx + 1}`,
+        description: `${brand || 'Card'} ${card_type || ''}`.trim() || null,
+        short_description: 'Buy',
+        price: Number(price) || 0,
+        category: 'assets' as const,
+        product_type: 'stock' as const,
+        image_url: null,
+        file_url: null,
+        is_active: true,
+        bin: bin || null,
+        city: city || null,
+        state: state || null,
+        zip: zip || null,
+        expire: expire || null,
+        country: country || null,
+        card_type: card_type || null,
+        brand: brand || null,
+        bank: bank || null,
+      };
+    });
+  };
+
+  const handleBulkCreate = async () => {
+    if (!bulkStockText.trim()) {
+      toast.error('Paste or upload stock lines first.');
+      return;
+    }
+
+    const parsedProducts = parseStockLines(bulkStockText);
+    const { error } = await supabase.from('products').insert(parsedProducts);
+    if (error) {
+      toast.error('Failed to import stock lines');
+      return;
+    }
+
+    toast.success(`Imported ${parsedProducts.length} stock products`);
+    setBulkStockText('');
+    fetchProducts();
+  };
+
   const getCategoryClass = (category: string) => {
     switch (category) {
       case 'software': return 'bg-blue-500/20 text-blue-400';
@@ -307,6 +368,22 @@ export default function ProductManager() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
+
+            {formData.product_type === 'stock' && (
+              <div className="space-y-2 border border-primary/20 rounded-md p-3">
+                <Label className="font-mono text-xs text-muted-foreground">BULK STOCK IMPORT (CSV OR PIPE)</Label>
+                <Input type="file" accept=".txt,.csv" onChange={handleBulkFile} />
+                <Textarea
+                  className="crt-input min-h-[120px]"
+                  value={bulkStockText}
+                  onChange={(e) => setBulkStockText(e.target.value)}
+                  placeholder="bin,city,state,zip,expire,country,card_type,brand,bank,price\nOR\nbin|city|state|zip|expire|country|card_type|brand|bank|price"
+                />
+                <Button type="button" variant="outline" onClick={handleBulkCreate}>
+                  Import Lines as Listings
+                </Button>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
