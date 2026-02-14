@@ -7,6 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import BootScreen from "@/components/BootScreen";
 import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
+import { supabase } from "@/integrations/supabase/client";
+import { applyAppearance, getBackgroundImagePreference, getThemePreference } from "@/lib/appearance";
+import { toast } from "sonner";
 
 // Lazy load all route components for code splitting
 const Desktop = lazy(() => import("./pages/Desktop"));
@@ -44,6 +47,37 @@ function AppRoutes() {
   const [hasSeenAnnouncements, setHasSeenAnnouncements] = useState(() => {
     return sessionStorage.getItem('announcements_seen') === 'true';
   });
+
+  useEffect(() => {
+    const updatesEnabled = localStorage.getItem('updates_notifications_enabled') === 'true';
+    if (!user || !updatesEnabled) return;
+
+    const channel = supabase
+      .channel('announcement-updates')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'announcements' },
+        (payload) => {
+          const announcement = payload.new as { title?: string; message?: string; is_active?: boolean };
+          if (!announcement?.is_active) return;
+
+          toast.info(announcement.title || 'New update', {
+            description: announcement.message || 'A new announcement was published.',
+          });
+
+          if (Notification.permission === 'granted') {
+            new Notification(announcement.title || 'DarkMarket Update', {
+              body: announcement.message || 'Open the app to view details.',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user]);
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -109,6 +143,10 @@ function AppContent() {
       setShowBoot(false);
       setHasBooted(true);
     }
+  }, []);
+
+  useEffect(() => {
+    applyAppearance(getThemePreference(), getBackgroundImagePreference());
   }, []);
   const handleBootComplete = () => {
     setShowBoot(false);
