@@ -14,6 +14,7 @@ interface Product {
   short_description: string | null;
   price: number;
   category: string;
+  product_type: 'stock' | 'logz' | 'accounts';
   image_url: string | null;
   created_at: string;
 }
@@ -48,8 +49,9 @@ export default function Homepage() {
     setLoading(true);
     const { data, error } = await supabase
       .from('products')
-      .select('id, title, short_description, price, category, image_url, created_at')
+      .select('id, title, short_description, price, category, product_type, image_url, created_at')
       .eq('is_active', true)
+      .neq('product_type', 'stock')
       .order('created_at', { ascending: false })
       .limit(6);
     if (!error) setProducts(data || []);
