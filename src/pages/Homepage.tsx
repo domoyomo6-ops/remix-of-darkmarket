@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Terminal, Zap, Package, ArrowRight, Bell, Sparkles, Clock, TrendingUp, Shield, Wifi, Database, Cpu } from 'lucide-react';
+import { Terminal, Zap, Package, ArrowRight, Bell, Sparkles, Clock, TrendingUp, Shield, Wifi, Database, Cpu, Eye, Brain, Waves } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import MainLayout from '@/components/layout/MainLayout';
@@ -82,6 +82,12 @@ export default function Homepage() {
   return (
     <MainLayout>
       <div className="min-h-screen relative">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
+          <div className="absolute top-1/3 right-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl" />
+        </div>
+
         {/* Moving scan line */}
         <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden opacity-30">
           <div className="absolute w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-scan" />
@@ -113,14 +119,14 @@ export default function Homepage() {
               </div>
 
               {/* 3D Title */}
-              <div className="text-center mb-8">
+              <div className={`text-center mb-8 transition-all duration-700 ${bootComplete ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4">
                   <Text3D className="text-primary">
                     HELL5TAR://
                   </Text3D>
                 </h1>
                 <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-6">
-                  {'>'} Premium digital assets • Secure transactions • Instant delivery
+                  {'>'} Designed to slow visual noise, direct attention, and keep users in high-focus flow.
                 </p>
 
                 {/* Boot sequence commands */}
@@ -146,6 +152,43 @@ export default function Homepage() {
                     VIEW MY ORDERS
                   </Button>
                 </div>
+              </div>
+            </div>
+          </TerminalWindow>
+
+          {/* VISUAL PSYCHOLOGY SECTION */}
+          <TerminalWindow title="human_factors_design" variant="success" className="mb-8">
+            <div className="p-6 md:p-8">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <Brain className="w-5 h-5 text-primary" />
+                <h2 className="font-bold text-primary terminal-glow">FOCUS_ENGINE://</h2>
+                <Badge variant="outline" className="border-primary/40 text-primary">NEURO-UX ACTIVE</Badge>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  {
+                    icon: Eye,
+                    title: 'Visual Hierarchy',
+                    desc: 'Bright accents are used only on key actions so users decide faster with less cognitive effort.',
+                  },
+                  {
+                    icon: Waves,
+                    title: 'Calm + Tension Balance',
+                    desc: 'Soft gradients calm the background while scan-lines add controlled energy and curiosity.',
+                  },
+                  {
+                    icon: Brain,
+                    title: 'Memory Anchors',
+                    desc: 'Consistent terminal motifs improve recall, making navigation feel familiar and intentional.',
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-lg border border-primary/20 bg-background/40 p-4 hover:bg-primary/5 transition-colors">
+                    <item.icon className="w-5 h-5 text-primary mb-3" />
+                    <h3 className="font-semibold text-primary mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </TerminalWindow>
