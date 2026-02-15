@@ -3,7 +3,6 @@ import { Loader2, RotateCcw, ShoppingCart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { addToCart } from '@/pages/Cart';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -12,14 +11,7 @@ import MainLayout from '@/components/layout/MainLayout';
 interface Product {
   id: string;
   bin: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  expire: string | null;
   country: string | null;
-  card_type: string | null;
-  brand: string | null;
-  bank: string | null;
   price: number;
   short_description: string | null;
 }
@@ -30,7 +22,6 @@ export default function Stock() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
-  const [bankFilter, setBankFilter] = useState<string>('all');
   const [cart, setCart] = useState<string[]>([]);
 
   useEffect(() => {
@@ -41,7 +32,7 @@ export default function Stock() {
     setLoading(true);
     const { data, error } = await supabase
       .from('products')
-      .select('id, bin, city, state, zip, expire, country, card_type, brand, bank, price, short_description')
+      .select('id, bin, country, price, short_description')
       .eq('is_active', true)
       .eq('product_type', 'stock')
       .order('created_at', { ascending: false });
@@ -107,14 +98,9 @@ export default function Stock() {
   };
 
   const resetFilters = () => {
-    setBankFilter('all');
     setCart([]);
   };
-
-  const uniqueBanks = [...new Set(products.map(p => p.bank).filter(Boolean))];
-  const filteredProducts = bankFilter === 'all' 
-    ? products 
-    : products.filter(p => p.bank === bankFilter);
+  const filteredProducts = products;
 
   if (loading) {
     return (
@@ -129,25 +115,7 @@ export default function Stock() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Filters */}
         <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label className="text-xs text-muted-foreground mb-1 block">BANK</label>
-              <Select value={bankFilter} onValueChange={setBankFilter}>
-                <SelectTrigger className="bg-card border-border">
-                  <SelectValue placeholder="All Banks" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Banks</SelectItem>
-                  {uniqueBanks.map(bank => (
-                    <SelectItem key={bank} value={bank!}>{bank}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={resetFilters}>
               <RotateCcw className="w-3 h-3 mr-1" />
@@ -168,14 +136,7 @@ export default function Stock() {
               <thead className="bg-card border-b border-border">
                 <tr>
                   <th className="text-left p-3 text-muted-foreground font-medium">Bin</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">City</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">State</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Zip</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Expire</th>
                   <th className="text-left p-3 text-muted-foreground font-medium">Country</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Card Type</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Brand</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Bank</th>
                   <th className="text-right p-3 text-muted-foreground font-medium">Purchase</th>
                 </tr>
               </thead>
@@ -186,14 +147,7 @@ export default function Stock() {
                     className={`border-b border-border/50 hover:bg-card/50 transition-colors ${idx % 2 === 0 ? 'bg-background' : 'bg-card/20'}`}
                   >
                     <td className="p-3 font-mono text-foreground">{product.bin || '-'}</td>
-                    <td className="p-3 text-foreground">{product.city || '-'}</td>
-                    <td className="p-3 text-foreground">{product.state || '-'}</td>
-                    <td className="p-3 font-mono text-foreground">{product.zip || '-'}</td>
-                    <td className="p-3 font-mono text-foreground">{product.expire || '-'}</td>
                     <td className="p-3 text-foreground">{product.country || '-'}</td>
-                    <td className="p-3 text-foreground">{product.card_type || '-'}</td>
-                    <td className="p-3 text-foreground">{product.brand || '-'}</td>
-                    <td className="p-3 text-foreground">{product.bank || '-'}</td>
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                          <Badge variant="destructive" className="font-mono">
