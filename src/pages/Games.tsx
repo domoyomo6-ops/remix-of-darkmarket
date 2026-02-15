@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dice1, Dice5, CircleDot, Spade, Users, Eye, Trophy, Plus, Loader2, Terminal } from 'lucide-react';
+import { Dice1, Dice5, CircleDot, Spade, Users, Eye, Trophy, Plus, Loader2, Terminal, Sparkles, Landmark, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ interface GameSession {
 }
 
 export default function Games() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const [activeGame, setActiveGame] = useState<GameType | null>(null);
   const [activeSession, setActiveSession] = useState<GameSession | null>(null);
@@ -176,11 +176,12 @@ export default function Games() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen relative">
+      <div className="min-h-screen relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,0,200,0.15),transparent_45%),radial-gradient(circle_at_bottom,rgba(0,255,255,0.12),transparent_55%)]" />
         {/* Scanline overlay */}
         <div className="pointer-events-none fixed inset-0 opacity-[0.03] bg-[linear-gradient(rgba(0,255,150,0.2)_1px,transparent_1px)] bg-[size:100%_3px] z-10" />
         
-        <div className="container mx-auto px-4 py-6 sm:py-8 relative z-20 space-y-6">
+        <div className="container mx-auto px-4 py-6 sm:py-8 relative z-20 space-y-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -190,7 +191,7 @@ export default function Games() {
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
               </div>
               <h1 className="text-2xl sm:text-3xl font-mono font-bold text-primary terminal-glow">GAME_ROOM://</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground font-mono mt-1">Wager your balance • Play to win</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-mono mt-1">Casino floor active • Live tables • Wallet settles each outcome</p>
             </div>
             
             <Dialog open={showCreate} onOpenChange={setShowCreate}>
@@ -247,6 +248,27 @@ export default function Games() {
             </Dialog>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="panel-3d border-primary/25 bg-black/35">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-mono text-sm"><Sparkles className="w-4 h-4" />IMMERSIVE_FLOOR</div>
+                <p className="text-xs text-muted-foreground font-mono">Walk table-to-table via quick play, open lobbies, and live spectator mode.</p>
+              </CardContent>
+            </Card>
+            <Card className="panel-3d border-primary/25 bg-black/35">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-mono text-sm"><Landmark className="w-4 h-4" />HOUSE_RULES</div>
+                <p className="text-xs text-muted-foreground font-mono">All games now pay controlled returns between 1x and 1.5x wager for wins/ties.</p>
+              </CardContent>
+            </Card>
+            <Card className="panel-3d border-primary/25 bg-black/35">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-mono text-sm"><ShieldCheck className="w-4 h-4" />WALLET_SYNC</div>
+                <p className="text-xs text-muted-foreground font-mono">Wallet updates server-side when a table is resolved by host or admin dealer.</p>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Quick Play */}
           <div>
             <h2 className="text-lg font-mono font-semibold text-primary mb-4 flex items-center gap-2">
@@ -273,6 +295,30 @@ export default function Games() {
               })}
             </div>
           </div>
+
+          {isAdmin && (
+            <div>
+              <h2 className="text-lg font-mono font-semibold text-primary mb-4 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5" />
+                DEALER_CONSOLE://
+              </h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                {lobbies.slice(0, 4).map((table) => (
+                  <Card key={`dealer-${table.id}`} className="panel-3d border-primary/30 bg-black/35">
+                    <CardContent className="p-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-mono text-primary text-sm uppercase">{table.game_type} table</p>
+                        <p className="text-xs text-muted-foreground font-mono">{table.status} • Wager ${table.wager_amount.toFixed(2)}</p>
+                      </div>
+                      <Button size="sm" variant="outline" className="border-primary/40 text-primary" onClick={() => joinGame(table, true)}>
+                        <Eye className="w-4 h-4 mr-1" /> Spectate
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Active Lobbies */}
           <div>
