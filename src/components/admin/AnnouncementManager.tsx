@@ -100,6 +100,15 @@ export default function AnnouncementManager() {
         toast.error('Failed to create announcement');
         console.error(error);
       } else {
+        await supabase.functions.invoke('broadcast-site-update', {
+          body: {
+            title: formData.title,
+            message: formData.message,
+            type: 'announcement',
+            link: '/announcements',
+            sendPush: true,
+          },
+        });
         toast.success('Announcement created');
         fetchAnnouncements();
         resetForm();

@@ -75,6 +75,15 @@ export default function DropManager() {
     if (error) {
       toast.error('Failed to create drop');
     } else {
+      await supabase.functions.invoke('broadcast-site-update', {
+        body: {
+          title: `Free Drop: ${newDrop.title}`,
+          message: newDrop.description || 'A new free digital product drop is live now.',
+          type: 'drop',
+          link: '/announcements',
+          sendPush: true,
+        },
+      });
       toast.success('Drop created!');
       setNewDrop({ title: '', description: '', starts_at: '', ends_at: '', max_claims: '' });
       fetchDrops();
