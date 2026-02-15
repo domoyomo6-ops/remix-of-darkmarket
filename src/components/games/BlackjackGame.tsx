@@ -139,21 +139,28 @@ export default function BlackjackGame({ session, onEnd }: BlackjackGameProps) {
     }
 
     setResult(gameResult);
+    const payoutMultiplier = gameResult === 'blackjack' ? 1.5 : gameResult === 'win' ? 1.2 : gameResult === 'push' ? 1 : 0;
 
     try {
       const winnerId = gameResult === 'lose' ? null : user?.id;
       await supabase.rpc('resolve_game', {
         p_game_id: session.id,
         p_winner_id: winnerId,
-        p_game_data: { player_score: pScore, dealer_score: dScore, result: gameResult }
+        p_game_data: {
+          player_score: pScore,
+          dealer_score: dScore,
+          result: gameResult,
+          payout_multiplier: payoutMultiplier,
+          return_wager: gameResult === 'push',
+        }
       });
 
       toast({
         title: gameResult === 'blackjack' ? '🎰 BLACKJACK!' : gameResult === 'win' ? '🎉 You Win!' : gameResult === 'lose' ? '😔 Dealer Wins' : '🤝 Push',
         description: gameResult === 'blackjack' 
-          ? `You won $${(session.wager_amount * 2.5).toFixed(2)}!`
+          ? `You won $${(session.wager_amount * 1.5).toFixed(2)}!`
           : gameResult === 'win'
-          ? `You won $${(session.wager_amount * 2).toFixed(2)}!`
+          ? `You won $${(session.wager_amount * 1.2).toFixed(2)}!`
           : gameResult === 'push'
           ? 'Your wager was returned.'
           : 'Better luck next time!',

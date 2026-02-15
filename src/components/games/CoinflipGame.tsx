@@ -41,18 +41,19 @@ export default function CoinflipGame({ session, onEnd }: CoinflipGameProps) {
 
     const won = flipResult === choice;
     setOutcome(won ? 'win' : 'lose');
+    const payoutMultiplier = won ? 1.5 : 0;
 
     try {
       await supabase.rpc('resolve_game', {
         p_game_id: session.id,
         p_winner_id: won ? user?.id : null,
-        p_game_data: { choice, result: flipResult, won }
+        p_game_data: { choice, result: flipResult, won, payout_multiplier: payoutMultiplier }
       });
 
       toast({
         title: won ? '🎉 You Win!' : '😔 You Lose',
         description: won 
-          ? `It was ${flipResult}! You won $${(session.wager_amount * 2).toFixed(2)}!`
+          ? `It was ${flipResult}! You won $${(session.wager_amount * 1.5).toFixed(2)}!`
           : `It was ${flipResult}. Better luck next time!`,
       });
     } catch (error) {

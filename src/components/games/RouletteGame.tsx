@@ -73,11 +73,11 @@ export default function RouletteGame({ session, onEnd }: RouletteGameProps) {
 
     // Resolve game
     try {
-      const multiplier = bet === 'green' ? 35 : 2;
+      const multiplier = bet === 'green' ? 1.5 : 1.25;
       await supabase.rpc('resolve_game', {
         p_game_id: session.id,
         p_winner_id: won ? user?.id : null,
-        p_game_data: { number: num, color, bet, won }
+        p_game_data: { number: num, color, bet, won, payout_multiplier: won ? multiplier : 0 }
       });
 
       toast({
@@ -127,7 +127,7 @@ export default function RouletteGame({ session, onEnd }: RouletteGameProps) {
             onClick={() => placeBet('red')}
             disabled={spinning}
           >
-            Red (2x)
+            Red (1.25x)
           </Button>
           <Button
             variant={bet === 'black' ? 'default' : 'outline'}
@@ -135,7 +135,7 @@ export default function RouletteGame({ session, onEnd }: RouletteGameProps) {
             onClick={() => placeBet('black')}
             disabled={spinning}
           >
-            Black (2x)
+            Black (1.25x)
           </Button>
           <Button
             variant={bet === 'green' ? 'default' : 'outline'}
@@ -143,28 +143,28 @@ export default function RouletteGame({ session, onEnd }: RouletteGameProps) {
             onClick={() => placeBet('green')}
             disabled={spinning}
           >
-            0 (35x)
+            0 (1.5x)
           </Button>
           <Button
             variant={bet === 'odd' ? 'default' : 'outline'}
             onClick={() => placeBet('odd')}
             disabled={spinning}
           >
-            Odd (2x)
+            Odd (1.25x)
           </Button>
           <Button
             variant={bet === 'even' ? 'default' : 'outline'}
             onClick={() => placeBet('even')}
             disabled={spinning}
           >
-            Even (2x)
+            Even (1.25x)
           </Button>
           <Button
             variant={bet === 'low' ? 'default' : 'outline'}
             onClick={() => placeBet('low')}
             disabled={spinning}
           >
-            1-18 (2x)
+            1-18 (1.25x)
           </Button>
           <Button
             variant={bet === 'high' ? 'default' : 'outline'}
@@ -172,7 +172,7 @@ export default function RouletteGame({ session, onEnd }: RouletteGameProps) {
             disabled={spinning}
             className="col-span-3"
           >
-            19-36 (2x)
+            19-36 (1.25x)
           </Button>
         </div>
 
