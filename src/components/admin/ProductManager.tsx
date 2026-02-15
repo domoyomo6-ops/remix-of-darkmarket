@@ -24,14 +24,7 @@ interface Product {
   is_active: boolean;
   created_at: string;
   bin: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  expire: string | null;
   country: string | null;
-  card_type: string | null;
-  brand: string | null;
-  bank: string | null;
 }
 
 export default function ProductManager() {
@@ -50,14 +43,7 @@ export default function ProductManager() {
     file_url: '',
     is_active: true,
     bin: '',
-    city: '',
-    state: '',
-    zip: '',
-    expire: '',
     country: '',
-    card_type: '',
-    brand: '',
-    bank: '',
   });
   const [bulkStockText, setBulkStockText] = useState('');
 
@@ -93,14 +79,7 @@ export default function ProductManager() {
       file_url: '',
       is_active: true,
       bin: '',
-      city: '',
-      state: '',
-      zip: '',
-      expire: '',
       country: '',
-      card_type: '',
-      brand: '',
-      bank: '',
     });
     setEditingProduct(null);
     setShowForm(false);
@@ -119,14 +98,7 @@ export default function ProductManager() {
       file_url: product.file_url || '',
       is_active: product.is_active,
       bin: product.bin || '',
-      city: product.city || '',
-      state: product.state || '',
-      zip: product.zip || '',
-      expire: product.expire || '',
       country: product.country || '',
-      card_type: product.card_type || '',
-      brand: product.brand || '',
-      bank: product.bank || '',
     });
     setShowForm(true);
   };
@@ -148,14 +120,7 @@ export default function ProductManager() {
       file_url: formData.file_url.trim() || null,
       is_active: formData.is_active,
       bin: formData.bin.trim() || null,
-      city: formData.city.trim() || null,
-      state: formData.state.trim() || null,
-      zip: formData.zip.trim() || null,
-      expire: formData.expire.trim() || null,
       country: formData.country.trim() || null,
-      card_type: formData.card_type.trim() || null,
-      brand: formData.brand.trim() || null,
-      bank: formData.bank.trim() || null,
     };
 
     if (editingProduct) {
@@ -227,43 +192,24 @@ export default function ProductManager() {
 
   type ParsedStockLine = {
     bin: string;
-    city: string;
-    state: string;
-    zip: string;
-    expire: string;
     country: string;
-    card_type: string;
-    brand: string;
-    bank: string;
     price: string;
   };
 
   const parseDelimitedLine = (line: string): ParsedStockLine | null => {
     const delimiter = line.includes('|') ? '|' : ',';
     const parts = line.split(delimiter).map((part) => part.trim());
-    if (parts.length < 9) {
+    if (parts.length < 2) {
       return null;
     }
 
-    const [bin = '', city = '', state = '', zip = '', expire = '', country = '', card_type = '', brand = '', bank = '', price = '0'] = parts;
-    return { bin, city, state, zip, expire, country, card_type, brand, bank, price };
+    const [bin = '', country = '', price = '0'] = parts;
+    return { bin, country, price };
   };
 
   const fieldAliases: Record<string, keyof ParsedStockLine> = {
     bin: 'bin',
-    city: 'city',
-    state: 'state',
-    zip: 'zip',
-    zipcode: 'zip',
-    postal: 'zip',
-    expire: 'expire',
-    expiry: 'expire',
     country: 'country',
-    cardtype: 'card_type',
-    card_type: 'card_type',
-    type: 'card_type',
-    brand: 'brand',
-    bank: 'bank',
     price: 'price',
   };
 
@@ -277,14 +223,7 @@ export default function ProductManager() {
       .map((block) => {
         const parsed: ParsedStockLine = {
           bin: '',
-          city: '',
-          state: '',
-          zip: '',
-          expire: '',
           country: '',
-          card_type: '',
-          brand: '',
-          bank: '',
           price: '0',
         };
 
@@ -301,7 +240,7 @@ export default function ProductManager() {
             parsed[key] = rawValue.join(':').trim();
           });
 
-        return parsed.bin || parsed.bank || parsed.brand ? parsed : null;
+        return parsed.bin ? parsed : null;
       })
       .filter((item): item is ParsedStockLine => Boolean(item));
   };
@@ -320,8 +259,8 @@ export default function ProductManager() {
     const normalizedRows = parsedRows.length > 0 ? parsedRows : labelRows;
 
     return normalizedRows.map((row, idx) => ({
-      title: `${row.bank || row.brand || 'Stock'} ${row.bin || idx + 1}`,
-      description: `${row.brand || 'Card'} ${row.card_type || ''}`.trim() || null,
+      title: `Stock ${row.bin || idx + 1}`,
+      description: `BIN ${row.bin}${row.country ? ` - ${row.country}` : ''}`,
       short_description: 'Buy',
       price: Number(row.price) || 0,
       category: 'assets' as const,
@@ -330,14 +269,7 @@ export default function ProductManager() {
       file_url: null,
       is_active: true,
       bin: row.bin || null,
-      city: row.city || null,
-      state: row.state || null,
-      zip: row.zip || null,
-      expire: row.expire || null,
       country: row.country || null,
-      card_type: row.card_type || null,
-      brand: row.brand || null,
-      bank: row.bank || null,
     }));
   };
 
@@ -349,7 +281,7 @@ export default function ProductManager() {
 
     const parsedProducts = parseStockLines(bulkStockText);
     if (parsedProducts.length === 0) {
-      toast.error('No valid stock listings found. Use CSV/pipe lines or label blocks (Bin: ..., City: ...).');
+      toast.error('No valid stock listings found. Use CSV/pipe lines or label blocks (Bin: ..., Country: ...).');
       return;
     }
     const { error } = await supabase.from('products').insert(parsedProducts);
@@ -462,7 +394,7 @@ export default function ProductManager() {
                   className="crt-input min-h-[120px]"
                   value={bulkStockText}
                   onChange={(e) => setBulkStockText(e.target.value)}
-                  placeholder="bin,city,state,zip,expire,country,card_type,brand,bank,price\nOR\nbin|city|state|zip|expire|country|card_type|brand|bank|price\nOR\nBin: 457173\nCity: Miami\nState: FL\nZip: 33101\nExpire: 12/27\nCountry: US\nCard Type: credit\nBrand: Visa\nBank: Chase\nPrice: 5"
+                  placeholder="bin,country,price\nOR\nbin|country|price\nOR\nBin: 457173\nCountry: US\nPrice: 5"
                 />
                 <Button type="button" variant="outline" onClick={handleBulkCreate}>
                   Import Lines as Listings
@@ -535,6 +467,7 @@ export default function ProductManager() {
             
             <div>
               <Label className="font-mono text-xs text-muted-foreground">FILE/DOWNLOAD URL</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">Use this for digital products so customers can instantly open/download after checkout.</p>
               <Input 
                 className="crt-input mt-1"
                 placeholder="https://example.com/file.zip"
@@ -551,93 +484,32 @@ export default function ProductManager() {
               <Label className="font-mono text-xs text-muted-foreground">ACTIVE</Label>
             </div>
 
-            {/* Card Metadata Fields */}
-            <div className="border-t border-primary/20 pt-4 mt-4">
-              <Label className="font-mono text-xs text-muted-foreground mb-3 block">CARD METADATA (OPTIONAL)</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">BIN</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="123456"
-                    value={formData.bin}
-                    onChange={(e) => setFormData({ ...formData, bin: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">CITY</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="New York"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">STATE</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="NY"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">ZIP</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="10001"
-                    value={formData.zip}
-                    onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">EXPIRE</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="12/25"
-                    value={formData.expire}
-                    onChange={(e) => setFormData({ ...formData, expire: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">COUNTRY</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="US"
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">CARD TYPE</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="credit"
-                    value={formData.card_type}
-                    onChange={(e) => setFormData({ ...formData, card_type: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">BRAND</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="Visa"
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">BANK</Label>
-                  <Input 
-                    className="crt-input mt-1"
-                    placeholder="Chase"
-                    value={formData.bank}
-                    onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-                  />
+            {/* Stock Metadata Fields */}
+            {formData.product_type === 'stock' && (
+              <div className="border-t border-primary/20 pt-4 mt-4">
+                <Label className="font-mono text-xs text-muted-foreground mb-3 block">STOCK METADATA</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="font-mono text-xs text-muted-foreground">BIN</Label>
+                    <Input
+                      className="crt-input mt-1"
+                      placeholder="123456"
+                      value={formData.bin}
+                      onChange={(e) => setFormData({ ...formData, bin: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-mono text-xs text-muted-foreground">COUNTRY</Label>
+                    <Input
+                      className="crt-input mt-1"
+                      placeholder="US"
+                      value={formData.country}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             
             <Button className="crt-button w-full" onClick={handleSaveProduct}>
               <Check className="w-4 h-4 mr-2" />

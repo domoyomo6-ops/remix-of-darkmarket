@@ -81,7 +81,7 @@ export default function Orders() {
 
       if (result.url) {
         window.open(result.url, '_blank');
-        toast.success('Download initiated');
+        toast.success('Product opened successfully');
       }
     } catch (err) {
       toast.error('Download failed');
@@ -231,7 +231,7 @@ export default function Orders() {
                               ) : (
                                 <>
                                   <Download className="w-3 h-3 mr-1" />
-                                  GET
+                                  OPEN
                                 </>
                               )}
                             </Button>
