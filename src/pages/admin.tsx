@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Users, ShoppingCart, DollarSign, Loader2, Terminal, Bell, CreditCard, Wallet, MessageCircle, Bitcoin, Gift, ArchiveX } from 'lucide-react';
+import { Package, Users, ShoppingCart, DollarSign, Loader2, Terminal, Bell, CreditCard, Wallet, MessageCircle, Bitcoin, Gift, ArchiveX, Bot } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/layout/MainLayout';
 import ProductManager from '@/components/admin/ProductManager';
@@ -12,6 +12,7 @@ import WalletManager from '@/components/admin/WalletManager';
 import SupportManager from '@/components/admin/SupportManager';
 import ExchangeManager from '@/components/admin/ExchangeManager';
 import GiftCardManager from '@/components/admin/GiftCardManager';
+import TelegramBotManager from '@/components/admin/TelegramBotManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -188,6 +189,14 @@ export default function Admin() {
                 <span className="sm:hidden">GIFT</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="telegram" 
+                className="flex-1 sm:flex-none font-mono text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Bot className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">TELEGRAM</span>
+                <span className="sm:hidden">BOT</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="users" 
                 className="flex-1 sm:flex-none font-mono text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
@@ -227,6 +236,10 @@ export default function Admin() {
 
             <TabsContent value="giftcards">
               <GiftCardManager />
+            </TabsContent>
+
+            <TabsContent value="telegram">
+              <TelegramBotManager />
             </TabsContent>
 
             <TabsContent value="users">
