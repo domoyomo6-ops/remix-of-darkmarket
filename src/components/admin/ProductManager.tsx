@@ -138,14 +138,36 @@ export default function ProductManager() {
         resetForm();
       }
     } else {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
-        .insert([productData]);
+        .insert([productData])
+        .select('id, title, price, product_type')
+        .single();
 
       if (error) {
         toast.error('Failed to create product');
         console.error(error);
       } else {
+        if (data?.product_type === 'stock') {
+          const productLink = `${window.location.origin}/product/${data.id}`;
+          await supabase.functions.invoke('broadcast-site-update', {
+            body: {
+              title: '🎉 Great News! Items Are Back In Stock!',
+              message: `The following products have been restocked:
+
+• ${data.title} - $${Number(data.price).toFixed(2)}
+
+Hurry! Limited quantities available.`,
+              type: 'product',
+              link: '/stock',
+              sendPush: true,
+              ctaLabel: '🛒 View Product',
+              ctaUrl: productLink,
+              secondaryCtaLabel: '🏪 Visit Our Shop',
+              secondaryCtaUrl: `${window.location.origin}/stock`,
+            },
+          });
+        }
         toast.success('Product created');
         fetchProducts();
         resetForm();

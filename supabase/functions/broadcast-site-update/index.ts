@@ -7,10 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
-const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SITE_URL = Deno.env.get("SITE_URL") || "https://example.com";
 
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT");
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
@@ -26,6 +25,17 @@ type BroadcastRequest = {
   link?: string;
   type: "announcement" | "drop" | "product" | "custom";
   sendPush?: boolean;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaUrl?: string;
+};
+
+type SiteSettings = {
+  telegram_admin_enabled: boolean;
+  telegram_customer_enabled: boolean;
+  telegram_bot_token: string | null;
+  telegram_admin_chat_id: string | null;
 };
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -36,7 +46,17 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { title, message, link, type, sendPush = true }: BroadcastRequest = await req.json();
+    const {
+      title,
+      message,
+      link,
+      type,
+      sendPush = true,
+      ctaLabel,
+      ctaUrl,
+      secondaryCtaLabel,
+      secondaryCtaUrl,
+    }: BroadcastRequest = await req.json();
 
     if (!title || !message || !type) {
       return new Response(JSON.stringify({ error: "title, message and type are required" }), {
@@ -45,18 +65,46 @@ serve(async (req: Request) => {
       });
     }
 
-    const telegramText = [`📣 *${title}*`, "", message, link ? `\n🔗 ${link}` : ""].join("\n");
+    const { data: settings, error: settingsError } = await supabase
+      .from("site_settings")
+      .select("telegram_admin_enabled, telegram_customer_enabled, telegram_bot_token, telegram_admin_chat_id")
+      .single();
+
+    if (settingsError) {
+      throw settingsError;
+    }
+
+    const telegramSettings = settings as SiteSettings | null;
+    const telegramEnabled = telegramSettings?.telegram_admin_enabled && telegramSettings?.telegram_customer_enabled;
+    const telegramToken = telegramSettings?.telegram_bot_token;
+    const telegramChatId = telegramSettings?.telegram_admin_chat_id;
 
     let telegramResult: { sent: boolean; error?: unknown } = { sent: false };
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-      const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+
+    if (telegramEnabled && telegramToken && telegramChatId) {
+      const fullLink = ctaUrl || (link ? `${SITE_URL}${link}` : undefined);
+      const lines = [`📣 *${title}*`, "", message];
+      if (fullLink && !ctaLabel) {
+        lines.push("", `🔗 ${fullLink}`);
+      }
+
+      const inlineKeyboard: Array<Array<{ text: string; url: string }>> = [];
+      if (ctaLabel && ctaUrl) {
+        inlineKeyboard.push([{ text: ctaLabel, url: ctaUrl }]);
+      }
+      if (secondaryCtaLabel && secondaryCtaUrl) {
+        inlineKeyboard.push([{ text: secondaryCtaLabel, url: secondaryCtaUrl }]);
+      }
+
+      const telegramResponse = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: telegramText,
+          chat_id: telegramChatId,
+          text: lines.join("\n"),
           parse_mode: "Markdown",
           disable_web_page_preview: false,
+          ...(inlineKeyboard.length > 0 ? { reply_markup: { inline_keyboard: inlineKeyboard } } : {}),
         }),
       });
 
