@@ -85,7 +85,16 @@ export default function TelegramBotManager() {
       return;
     }
 
+    const botToken = formData.telegram_bot_token.trim();
+    const chatId = formData.telegram_admin_chat_id.trim();
+
+    if (!botToken || !chatId) {
+      toast.error('Add bot token and chat ID before sending a test message');
+      return;
+    }
+
     setSendingTest(true);
+
     const { data, error } = await supabase.functions.invoke('broadcast-site-update', {
       body: {
         title: '🧪 Telegram Test Message',
@@ -93,6 +102,9 @@ export default function TelegramBotManager() {
         type: 'custom',
         link: '/stock',
         sendPush: false,
+        forceTelegram: true,
+        telegramBotToken: botToken,
+        telegramChatId: chatId,
         ctaLabel: '🛍️ Visit Our Shop',
         ctaUrl: `${window.location.origin}/stock`,
       },
