@@ -25,6 +25,9 @@ type BroadcastRequest = {
   link?: string;
   type: "announcement" | "drop" | "product" | "custom";
   sendPush?: boolean;
+  forceTelegram?: boolean;
+  telegramBotToken?: string;
+  telegramChatId?: string;
   ctaLabel?: string;
   ctaUrl?: string;
   secondaryCtaLabel?: string;
@@ -52,6 +55,9 @@ serve(async (req: Request) => {
       link,
       type,
       sendPush = true,
+      forceTelegram = false,
+      telegramBotToken,
+      telegramChatId,
       ctaLabel,
       ctaUrl,
       secondaryCtaLabel,
@@ -76,12 +82,13 @@ serve(async (req: Request) => {
 
     const telegramSettings = settings as SiteSettings | null;
     const telegramEnabled = telegramSettings?.telegram_admin_enabled && telegramSettings?.telegram_customer_enabled;
-    const telegramToken = telegramSettings?.telegram_bot_token;
-    const telegramChatId = telegramSettings?.telegram_admin_chat_id;
+    const telegramToken = telegramBotToken?.trim() || telegramSettings?.telegram_bot_token;
+    const resolvedTelegramChatId = telegramChatId?.trim() || telegramSettings?.telegram_admin_chat_id;
+    const shouldSendTelegram = forceTelegram || telegramEnabled;
 
     let telegramResult: { sent: boolean; error?: unknown } = { sent: false };
 
-    if (telegramEnabled && telegramToken && telegramChatId) {
+    if (shouldSendTelegram && telegramToken && resolvedTelegramChatId) {
       const fullLink = ctaUrl || (link ? `${SITE_URL}${link}` : undefined);
       const lines = [`📣 *${title}*`, "", message];
       if (fullLink && !ctaLabel) {
@@ -100,7 +107,7 @@ serve(async (req: Request) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chat_id: telegramChatId,
+          chat_id: resolvedTelegramChatId,
           text: lines.join("\n"),
           parse_mode: "Markdown",
           disable_web_page_preview: false,
