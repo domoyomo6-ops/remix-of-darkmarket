@@ -23,7 +23,7 @@ type BroadcastRequest = {
   title: string;
   message: string;
   link?: string;
-  type: "announcement" | "drop" | "product" | "custom";
+  type: "announcement" | "drop" | "product" | "custom" | "restock" | "update" | "promo" | "info";
   sendPush?: boolean;
   forceTelegram?: boolean;
   telegramBotToken?: string;
@@ -42,6 +42,25 @@ type SiteSettings = {
 };
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const typeLabelMap: Record<BroadcastRequest["type"], { emoji: string; label: string }> = {
+  announcement: { emoji: "📣", label: "Announcement" },
+  drop: { emoji: "🔥", label: "Drop" },
+  product: { emoji: "🛍️", label: "Product" },
+  custom: { emoji: "✨", label: "Update" },
+  restock: { emoji: "♻️", label: "Restock" },
+  update: { emoji: "🆕", label: "Update" },
+  promo: { emoji: "🎁", label: "Promo" },
+  info: { emoji: "ℹ️", label: "Info" },
+};
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -89,10 +108,20 @@ serve(async (req: Request) => {
     let telegramResult: { sent: boolean; error?: unknown } = { sent: false };
 
     if (shouldSendTelegram && telegramToken && resolvedTelegramChatId) {
+      const typeMeta = typeLabelMap[type] ?? typeLabelMap.custom;
       const fullLink = ctaUrl || (link ? `${SITE_URL}${link}` : undefined);
-      const lines = [`📣 *${title}*`, "", message];
+      const safeTitle = escapeHtml(title.trim());
+      const safeMessage = escapeHtml(message.trim());
+      const generatedAt = new Date().toUTCString();
+      const lines = [
+        `${typeMeta.emoji} <b>${safeTitle}</b>`,
+        `<blockquote>${safeMessage}</blockquote>`,
+        `<b>Category:</b> ${escapeHtml(typeMeta.label.toUpperCase())}`,
+        `<b>Posted:</b> ${escapeHtml(generatedAt)}`,
+      ];
+
       if (fullLink && !ctaLabel) {
-        lines.push("", `🔗 ${fullLink}`);
+        lines.push(`<b>Open:</b> ${escapeHtml(fullLink)}`);
       }
 
       const inlineKeyboard: Array<Array<{ text: string; url: string }>> = [];
@@ -108,8 +137,8 @@ serve(async (req: Request) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: resolvedTelegramChatId,
-          text: lines.join("\n"),
-          parse_mode: "Markdown",
+          text: lines.join("\n\n"),
+          parse_mode: "HTML",
           disable_web_page_preview: false,
           ...(inlineKeyboard.length > 0 ? { reply_markup: { inline_keyboard: inlineKeyboard } } : {}),
         }),
