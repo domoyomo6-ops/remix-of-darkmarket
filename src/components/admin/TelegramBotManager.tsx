@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bot, Loader2, MessageSquare, Save, Send } from 'lucide-react';
+import { Bot, Loader2, MessageSquare, Save, Send, Sparkles, Link as LinkIcon, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ export default function TelegramBotManager() {
     telegram_admin_chat_id: '',
   });
   const [testMessage, setTestMessage] = useState('✅ Telegram integration is configured and ready for stock updates.');
+  const [ctaLabel, setCtaLabel] = useState('🛍️ View Stock');
+  const [ctaUrl, setCtaUrl] = useState('/stock');
 
   useEffect(() => {
     fetchSettings();
@@ -95,6 +97,10 @@ export default function TelegramBotManager() {
 
     setSendingTest(true);
 
+    const resolvedCtaUrl = ctaUrl.trim().startsWith('http')
+      ? ctaUrl.trim()
+      : `${window.location.origin}${ctaUrl.trim().startsWith('/') ? ctaUrl.trim() : `/${ctaUrl.trim()}`}`;
+
     const { data, error } = await supabase.functions.invoke('broadcast-site-update', {
       body: {
         title: '🧪 Telegram Test Message',
@@ -105,8 +111,8 @@ export default function TelegramBotManager() {
         forceTelegram: true,
         telegramBotToken: botToken,
         telegramChatId: chatId,
-        ctaLabel: '🛍️ Visit Our Shop',
-        ctaUrl: `${window.location.origin}/stock`,
+        ctaLabel: ctaLabel.trim() || undefined,
+        ctaUrl: ctaLabel.trim() ? resolvedCtaUrl : undefined,
       },
     });
 
@@ -139,6 +145,30 @@ export default function TelegramBotManager() {
       <p className="text-sm text-muted-foreground font-mono">
         {'>'} Configure Telegram channel updates for new stock/restock alerts.
       </p>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono mb-1">
+            <Sparkles className="h-3.5 w-3.5" />
+            STYLED ALERTS
+          </div>
+          <p className="text-xs text-muted-foreground">Messages now render with richer Telegram formatting and category badges.</p>
+        </div>
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <div className="flex items-center gap-2 text-primary text-xs font-mono mb-1">
+            <LinkIcon className="h-3.5 w-3.5" />
+            SMART CTA
+          </div>
+          <p className="text-xs text-muted-foreground">Use a relative path like <span className="font-mono">/stock</span> or full URL.</p>
+        </div>
+        <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3">
+          <div className="flex items-center gap-2 text-cyan-300 text-xs font-mono mb-1">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            SAFE OUTPUT
+          </div>
+          <p className="text-xs text-muted-foreground">HTML escaping is applied server-side to prevent broken Telegram layouts.</p>
+        </div>
+      </div>
 
       <div className="grid gap-4">
         <div className="flex items-center justify-between rounded-lg border border-primary/20 p-3">
@@ -200,6 +230,26 @@ export default function TelegramBotManager() {
           value={testMessage}
           onChange={(e) => setTestMessage(e.target.value)}
         />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label className="font-mono text-xs text-muted-foreground">CTA LABEL (OPTIONAL)</Label>
+            <Input
+              className="crt-input mt-1"
+              placeholder="🛍️ View Stock"
+              value={ctaLabel}
+              onChange={(e) => setCtaLabel(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="font-mono text-xs text-muted-foreground">CTA URL / PATH</Label>
+            <Input
+              className="crt-input mt-1"
+              placeholder="/stock or https://example.com/stock"
+              value={ctaUrl}
+              onChange={(e) => setCtaUrl(e.target.value)}
+            />
+          </div>
+        </div>
         <Button variant="outline" className="w-full" onClick={sendTestMessage} disabled={sendingTest}>
           {sendingTest ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
           SEND TEST TO TELEGRAM
