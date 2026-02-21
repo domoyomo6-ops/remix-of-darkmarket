@@ -54,7 +54,7 @@ export default function MusicPlayer() {
   const [requestForm, setRequestForm] = useState({
     title: '',
     url: '',
-    amount: '2.00',
+    amount: '0.25',
   });
   const ownsCurrentPlaylist = !!currentPlaylist && currentPlaylist.user_id === user?.id;
   const playbackLocked = !isAdmin;
@@ -402,7 +402,7 @@ export default function MusicPlayer() {
       user_id: user.id,
       title: requestForm.title.trim(),
       source_url: requestForm.url.trim() || '',
-      source_type: 'url',
+      source_type: 'direct',
       status: 'pending',
     });
 
@@ -628,7 +628,7 @@ export default function MusicPlayer() {
                         className="bg-black/50 border-primary/30"
                       />
                       <p className="text-[10px] text-muted-foreground font-mono">
-                        Requests charge your wallet balance and queue for admin approval.
+                        Requests cost $0.25 each (4 songs = $1.00) from your wallet and queue for admin approval.
                       </p>
                       <Button onClick={submitRequest} className="w-full crt-button">
                         Submit Request
