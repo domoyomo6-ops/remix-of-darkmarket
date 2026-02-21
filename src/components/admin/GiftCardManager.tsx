@@ -69,6 +69,12 @@ export default function GiftCardManager() {
   // Form state
   const [amount, setAmount] = useState('25');
   const [expiresIn, setExpiresIn] = useState('');
+  const [stockAmount, setStockAmount] = useState('25');
+  const [stockCost, setStockCost] = useState('20');
+  const [stockQuantity, setStockQuantity] = useState('10');
+  const [stockLabel, setStockLabel] = useState('');
+  const [stockImageUrl, setStockImageUrl] = useState('');
+  const [creatingStock, setCreatingStock] = useState(false);
 
   useEffect(() => {
     fetchGiftCards();
@@ -261,6 +267,60 @@ export default function GiftCardManager() {
     card.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const createGiftCardStock = async () => {
+    if (!user || !isAdmin) {
+      return;
+    }
+
+    const amountValue = Number(stockAmount);
+    const costValue = Number(stockCost);
+    const quantityValue = Number(stockQuantity);
+
+    if (!Number.isFinite(amountValue) || amountValue <= 0) {
+      toast.error('Gift card amount must be greater than 0.');
+      return;
+    }
+
+    if (!Number.isFinite(costValue) || costValue <= 0) {
+      toast.error('Sell cost must be greater than 0.');
+      return;
+    }
+
+    if (!Number.isInteger(quantityValue) || quantityValue <= 0) {
+      toast.error('Quantity must be a whole number greater than 0.');
+      return;
+    }
+
+    setCreatingStock(true);
+
+    const amountLabel = amountValue % 1 === 0 ? `${amountValue}` : amountValue.toFixed(2);
+    const title = stockLabel.trim() || `$${amountLabel} Gift Card`;
+
+    const rows = Array.from({ length: quantityValue }).map((_, index) => ({
+      title,
+      description: `Gift card balance: $${amountLabel}. Unit ${index + 1}/${quantityValue}.`,
+      short_description: `Balance $${amountLabel} • Instant digital delivery`,
+      price: costValue,
+      category: 'assets' as const,
+      product_type: 'giftcards',
+      brand: 'Gift Cards',
+      image_url: stockImageUrl.trim() || null,
+      is_active: true,
+    }));
+
+    const { error } = await supabase.from('products').insert(rows);
+    if (error) {
+      toast.error(`Failed to create gift card stock: ${error.message}`);
+      setCreatingStock(false);
+      return;
+    }
+
+    toast.success(`Added ${quantityValue} x ${title} at $${costValue.toFixed(2)} each.`);
+    setStockLabel('');
+    setStockImageUrl('');
+    setCreatingStock(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -361,6 +421,49 @@ export default function GiftCardManager() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="panel-3d rounded-lg p-5 border border-primary/20 bg-primary/5 space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="font-mono font-bold text-primary text-sm sm:text-base">Gift Card Stock Manager Add-on</h3>
+            <p className="font-mono text-xs text-muted-foreground mt-1">
+              Drop inventory bundles for the new Gift Card store page with custom amount, price, and quantity.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div>
+            <Label className="text-xs font-mono text-primary">Gift Card Amount ($)</Label>
+            <Input value={stockAmount} onChange={(e) => setStockAmount(e.target.value)} type="number" min="1" step="0.01" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Sell Cost ($)</Label>
+            <Input value={stockCost} onChange={(e) => setStockCost(e.target.value)} type="number" min="0.01" step="0.01" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Quantity</Label>
+            <Input value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} type="number" min="1" step="1" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Display Label (optional)</Label>
+            <Input value={stockLabel} onChange={(e) => setStockLabel(e.target.value)} placeholder="$25 Gift Card" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Image URL (optional)</Label>
+            <Input value={stockImageUrl} onChange={(e) => setStockImageUrl(e.target.value)} placeholder="https://..." className="crt-input mt-1" />
+          </div>
+        </div>
+
+        <Button
+          onClick={createGiftCardStock}
+          disabled={creatingStock || (adminChecked && !isAdmin)}
+          className="crt-button font-mono"
+        >
+          {creatingStock ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+          Add Gift Card Stock Batch
+        </Button>
       </div>
 
       {/* Search */}
