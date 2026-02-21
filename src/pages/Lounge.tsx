@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, Users, Mic, Radio, Crown, Plus,
-  Music2, Settings, Calendar, ArrowLeft, Volume2
+  Calendar, ArrowLeft, MonitorUp
 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ export default function Lounge() {
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [newRoom, setNewRoom] = useState({ name: '', type: 'push_to_talk' as VoiceRoom['room_type'] });
   const [adminIds, setAdminIds] = useState<string[]>([]);
+  const [theaterMode, setTheaterMode] = useState(false);
 
   useEffect(() => {
     fetchVoiceRooms();
@@ -158,6 +159,16 @@ export default function Lounge() {
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-xs text-primary font-mono">{onlineUsers.length} online</span>
               </div>
+
+              <Button
+                variant={theaterMode ? 'default' : 'outline'}
+                size="sm"
+                className="gap-2"
+                onClick={() => setTheaterMode((prev) => !prev)}
+              >
+                <MonitorUp className="w-4 h-4" />
+                {theaterMode ? 'Exit Theater' : 'Theater'}
+              </Button>
               
               {isAdmin && (
                 <Dialog open={showCreateRoom} onOpenChange={setShowCreateRoom}>
@@ -205,84 +216,85 @@ export default function Lounge() {
         {/* Main content */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Chat area */}
-          <div className="flex-1 flex flex-col min-h-0 lg:border-r border-fuchsia-400/25 bg-black/30">
-            <LoungeChat />
+          <div className={`flex-1 flex flex-col min-h-0 bg-black/30 ${theaterMode ? '' : 'lg:border-r border-fuchsia-400/25'}`}>
+            <LoungeChat showComposer={!theaterMode} />
           </div>
 
-          {/* Sidebar */}
-          <div className="w-full lg:w-80 border-t lg:border-t-0 border-fuchsia-400/25 bg-black/40 backdrop-blur-md overflow-y-auto">
-            {/* Online users */}
-            <div className="p-4 border-b border-fuchsia-400/20">
-              <h3 className="text-sm font-mono text-primary mb-3 flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Online ({onlineUsers.length})
-              </h3>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {onlineUsers.map((u) => (
-                  <div key={u.id} className="flex items-center gap-2 text-sm">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    <span className={`font-mono ${u.is_admin ? 'text-red-400' : 'text-foreground'}`}>
-                      {u.display_name || `User_${u.user_id.slice(0, 6)}`}
-                    </span>
-                    {u.is_admin && <Crown className="w-3 h-3 text-red-400" />}
-                  </div>
-                ))}
-                {onlineUsers.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No users online</p>
-                )}
+          {!theaterMode && (
+            <div className="w-full lg:w-80 border-t lg:border-t-0 border-fuchsia-400/25 bg-black/40 backdrop-blur-md overflow-y-auto">
+              {/* Online users */}
+              <div className="p-4 border-b border-fuchsia-400/20">
+                <h3 className="text-sm font-mono text-primary mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Online ({onlineUsers.length})
+                </h3>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {onlineUsers.map((u) => (
+                    <div key={u.id} className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span className={`font-mono ${u.is_admin ? 'text-red-400' : 'text-foreground'}`}>
+                        {u.display_name || `User_${u.user_id.slice(0, 6)}`}
+                      </span>
+                      {u.is_admin && <Crown className="w-3 h-3 text-red-400" />}
+                    </div>
+                  ))}
+                  {onlineUsers.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No users online</p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Voice rooms */}
-            <div className="p-4">
-              <h3 className="text-sm font-mono text-primary mb-3 flex items-center gap-2">
-                <Mic className="w-4 h-4" />
-                Voice Rooms
-              </h3>
-              <div className="space-y-3">
-                {voiceRooms.map((room) => (
-                  <div key={room.id}>
-                    {selectedVoiceRoom?.id === room.id ? (
-                      <VoiceRoomComponent 
-                        room={room} 
-                        onLeave={() => setSelectedVoiceRoom(null)}
-                      />
-                    ) : (
-                      <button
-                        onClick={() => setSelectedVoiceRoom(room)}
-                        className="w-full p-3 rounded-lg bg-gradient-to-br from-fuchsia-950/40 via-black/70 to-cyan-950/30 border border-fuchsia-400/20 hover:border-fuchsia-300/60 hover:shadow-[0_0_24px_rgba(217,70,239,0.25)] transition-all duration-300 text-left group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {room.room_type === 'push_to_talk' && <Mic className="w-4 h-4 text-primary" />}
-                            {room.room_type === 'always_on' && <Radio className="w-4 h-4 text-green-500" />}
-                            {room.room_type === 'scheduled' && <Calendar className="w-4 h-4 text-yellow-500" />}
-                            <span className="text-sm font-medium">{room.name}</span>
+              {/* Voice rooms */}
+              <div className="p-4">
+                <h3 className="text-sm font-mono text-primary mb-3 flex items-center gap-2">
+                  <Mic className="w-4 h-4" />
+                  Voice Rooms
+                </h3>
+                <div className="space-y-3">
+                  {voiceRooms.map((room) => (
+                    <div key={room.id}>
+                      {selectedVoiceRoom?.id === room.id ? (
+                        <VoiceRoomComponent 
+                          room={room} 
+                          onLeave={() => setSelectedVoiceRoom(null)}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setSelectedVoiceRoom(room)}
+                          className="w-full p-3 rounded-lg bg-gradient-to-br from-fuchsia-950/40 via-black/70 to-cyan-950/30 border border-fuchsia-400/20 hover:border-fuchsia-300/60 hover:shadow-[0_0_24px_rgba(217,70,239,0.25)] transition-all duration-300 text-left group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {room.room_type === 'push_to_talk' && <Mic className="w-4 h-4 text-primary" />}
+                              {room.room_type === 'always_on' && <Radio className="w-4 h-4 text-green-500" />}
+                              {room.room_type === 'scheduled' && <Calendar className="w-4 h-4 text-yellow-500" />}
+                              <span className="text-sm font-medium">{room.name}</span>
+                            </div>
+                            {isAdmin && room.created_by === user?.id && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteVoiceRoom(room.id);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity text-xs"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
-                          {isAdmin && room.created_by === user?.id && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteVoiceRoom(room.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity text-xs"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {voiceRooms.length === 0 && (
-                  <p className="text-center text-muted-foreground text-sm py-4">
-                    No voice rooms active
-                  </p>
-                )}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {voiceRooms.length === 0 && (
+                    <p className="text-center text-muted-foreground text-sm py-4">
+                      No voice rooms active
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Synced music player */}
