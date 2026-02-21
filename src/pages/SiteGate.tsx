@@ -84,6 +84,13 @@ const SiteGate = () => {
 ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝
 `;
 
+  const unityGateNotice = [
+    "> UNITY 3D IMMERSION MODE: ONLINE",
+    "> WALLET LINK REQUIRED BEFORE ANY PURCHASE",
+    "> DEPOSIT PATHS: SITE BALANCE / CASH APP / TELEGRAM STARS / VENMO / MORE",
+    "> CASHOUT + BUY ACCESS ROUTES ARE WALLET-GATED ONLY",
+  ];
+
   // --- Clock pulse ---
   useEffect(() => {
     const timer = setInterval(() => {
@@ -374,6 +381,24 @@ const SiteGate = () => {
                   )}
                 </div>
 
+                <div
+                  className="rounded-md px-3 py-2 space-y-1 border"
+                  style={{
+                    background: `linear-gradient(145deg, rgba(${COLORS.highlight},0.08) 0%, rgba(${COLORS.main},0.06) 100%)`,
+                    borderColor: `rgba(${COLORS.highlight},0.35)`,
+                    boxShadow: `inset 0 0 20px rgba(${COLORS.highlight},0.08), 0 0 16px rgba(${COLORS.main},0.15)`,
+                  }}
+                >
+                  <p className="text-[10px] uppercase tracking-[0.18em]" style={{ color: `rgba(${COLORS.highlight},0.85)` }}>
+                    SiteGate // Unity 3D Operations Console
+                  </p>
+                  {unityGateNotice.map((line) => (
+                    <p key={line} className="text-[10px] sm:text-[11px] leading-tight" style={{ color: `rgba(${COLORS.main},0.78)` }}>
+                      {line}
+                    </p>
+                  ))}
+                </div>
+
                 {/* LOADING BAR */}
                 {!bootComplete && (
                   <div className="w-full h-4 rounded-sm overflow-hidden mt-4 relative" style={{ background: `rgba(${COLORS.main},0.08)`, border: `1px solid rgba(${COLORS.main},0.2)` }}>
@@ -534,4 +559,3 @@ export default SiteGate;
 
 
  
-
