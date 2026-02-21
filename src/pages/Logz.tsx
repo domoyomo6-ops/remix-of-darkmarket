@@ -163,31 +163,31 @@ export default function Logz() {
         </div>
 
         {/* Product Table */}
-        <div className="border border-primary/40 rounded-xl overflow-hidden bg-black/60 shadow-[0_20px_70px_rgba(0,0,0,0.55),0_0_35px_rgba(34,197,94,0.14)] [transform:rotateX(5deg)] origin-top">
+        <div className="rounded-2xl border border-purple-500/35 bg-gradient-to-b from-black/70 via-card/45 to-black/60 p-4 shadow-[0_24px_65px_rgba(0,0,0,0.55),0_0_35px_rgba(168,85,247,0.16)] [transform:rotateX(5deg)] origin-top">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-card border-b border-border">
+            <table className="w-full border-separate border-spacing-y-2 text-sm">
+              <thead className="bg-card/75">
                 <tr>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Title</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Description</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Country</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Brand</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Bank</th>
-                  <th className="text-right p-3 text-muted-foreground font-medium">Purchase</th>
+                  <th className="rounded-l-md border-y border-l border-border/70 p-3 text-left font-medium text-muted-foreground">Title</th>
+                  <th className="border-y border-border/70 p-3 text-left font-medium text-muted-foreground">Description</th>
+                  <th className="border-y border-border/70 p-3 text-left font-medium text-muted-foreground">Country</th>
+                  <th className="border-y border-border/70 p-3 text-left font-medium text-muted-foreground">Brand</th>
+                  <th className="border-y border-border/70 p-3 text-left font-medium text-muted-foreground">Bank</th>
+                  <th className="rounded-r-md border-y border-r border-border/70 p-3 text-right font-medium text-muted-foreground">Purchase</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProducts.map((product, idx) => (
                   <tr 
                     key={product.id} 
-                    className={`border-b border-border/50 hover:bg-primary/10 hover:[transform:translateZ(22px)] transition-all duration-200 ${idx % 2 === 0 ? 'bg-background/85' : 'bg-card/35'}`}
+                    className={`hover:[transform:translateZ(22px)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(168,85,247,0.2)] ${idx % 2 === 0 ? 'bg-background/85' : 'bg-card/35'}`}
                   >
-                    <td className="p-3 font-mono text-foreground">{product.title}</td>
-                    <td className="p-3 text-foreground">{product.short_description || '-'}</td>
-                    <td className="p-3 text-foreground">{product.country || '-'}</td>
-                    <td className="p-3 text-foreground">{product.brand || '-'}</td>
-                    <td className="p-3 text-foreground">{product.bank || '-'}</td>
-                    <td className="p-3 text-right">
+                    <td className="rounded-l-lg border border-r-0 border-border/70 p-3 font-mono text-foreground">{product.title}</td>
+                    <td className="border-y border-border/70 p-3 text-foreground">{product.short_description || '-'}</td>
+                    <td className="border-y border-border/70 p-3 text-foreground">{product.country || '-'}</td>
+                    <td className="border-y border-border/70 p-3 text-foreground">{product.brand || '-'}</td>
+                    <td className="border-y border-border/70 p-3 text-foreground">{product.bank || '-'}</td>
+                    <td className="rounded-r-lg border border-l-0 border-border/70 p-3 text-right">
                        <div className="flex items-center justify-end gap-2">
                         <Badge variant="destructive" className="font-mono">
                           ${product.price.toFixed(2)}

@@ -130,25 +130,25 @@ export default function Stock() {
         </div>
 
         {/* Product Table */}
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="rounded-xl border border-primary/30 bg-gradient-to-b from-card/80 via-background to-card/30 p-3 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-card border-b border-border">
+            <table className="w-full border-separate border-spacing-y-2 text-sm">
+              <thead className="bg-card/80">
                 <tr>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Bin</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Country</th>
-                  <th className="text-right p-3 text-muted-foreground font-medium">Purchase</th>
+                  <th className="rounded-l-md border-y border-l border-border/70 p-3 text-left font-medium text-muted-foreground">Bin</th>
+                  <th className="border-y border-border/70 p-3 text-left font-medium text-muted-foreground">Country</th>
+                  <th className="rounded-r-md border-y border-r border-border/70 p-3 text-right font-medium text-muted-foreground">Purchase</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProducts.map((product, idx) => (
                   <tr 
                     key={product.id} 
-                    className={`border-b border-border/50 hover:bg-card/50 transition-colors ${idx % 2 === 0 ? 'bg-background' : 'bg-card/20'}`}
+                    className={`transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(245,158,11,0.16)] ${idx % 2 === 0 ? 'bg-background/90' : 'bg-card/35'}`}
                   >
-                    <td className="p-3 font-mono text-foreground">{product.bin || '-'}</td>
-                    <td className="p-3 text-foreground">{product.country || '-'}</td>
-                    <td className="p-3 text-right">
+                    <td className="rounded-l-lg border border-r-0 border-border/70 p-3 font-mono text-foreground">{product.bin || '-'}</td>
+                    <td className="border-y border-border/70 p-3 text-foreground">{product.country || '-'}</td>
+                    <td className="rounded-r-lg border border-l-0 border-border/70 p-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                          <Badge variant="destructive" className="font-mono">
                           ${product.price.toFixed(2)}
