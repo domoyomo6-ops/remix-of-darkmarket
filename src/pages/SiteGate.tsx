@@ -213,7 +213,7 @@ const SiteGate = () => {
       />
 
       {/* MAIN CRT MONITOR AREA */}
-      <div className="w-full max-w-xl relative z-10 chain-overlay" style={{ perspective: "1000px" }}>
+      <div className="w-full max-w-xl relative z-10" style={{ perspective: "1000px" }}>
         <div className="relative rounded-xl p-3 sm:p-4 steel-terminal-box"
           style={{
             background: `linear-gradient(145deg, #1a1a1e 0%, #0d0d0f 50%, #080809 100%)`,

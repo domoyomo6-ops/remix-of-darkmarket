@@ -25,7 +25,11 @@ interface UserInfo {
   title?: string;
 }
 
-export default function LoungeChat() {
+interface LoungeChatProps {
+  showComposer?: boolean;
+}
+
+export default function LoungeChat({ showComposer = true }: LoungeChatProps) {
   const { user, isAdmin } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -271,52 +275,54 @@ export default function LoungeChat() {
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-primary/20">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="shrink-0"
-              onClick={() => setShowEmojis(!showEmojis)}
-            >
-              <Smile className="w-5 h-5" />
-            </Button>
+      {showComposer && (
+        <div className="p-4 border-t border-primary/20">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="shrink-0"
+                onClick={() => setShowEmojis(!showEmojis)}
+              >
+                <Smile className="w-5 h-5" />
+              </Button>
+              
+              {showEmojis && (
+                <div className="absolute bottom-full left-0 mb-2 p-2 rounded-lg bg-black/90 border border-primary/30 grid grid-cols-6 gap-1">
+                  {emojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => addEmoji(emoji)}
+                      className="text-xl hover:scale-125 transition-transform p-1"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             
-            {showEmojis && (
-              <div className="absolute bottom-full left-0 mb-2 p-2 rounded-lg bg-black/90 border border-primary/30 grid grid-cols-6 gap-1">
-                {emojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => addEmoji(emoji)}
-                    className="text-xl hover:scale-125 transition-transform p-1"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            )}
+            <Input
+              ref={inputRef}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Type a message..."
+              className="flex-1 bg-black/50 border-primary/30"
+            />
+            
+            <Button 
+              onClick={sendMessage}
+              disabled={!newMessage.trim()}
+              size="icon"
+              className="shrink-0 crt-button"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
           </div>
-          
-          <Input
-            ref={inputRef}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Type a message..."
-            className="flex-1 bg-black/50 border-primary/30"
-          />
-          
-          <Button 
-            onClick={sendMessage}
-            disabled={!newMessage.trim()}
-            size="icon"
-            className="shrink-0 crt-button"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

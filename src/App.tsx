@@ -134,15 +134,19 @@ function AppRoutes() {
     </ChunkErrorBoundary>;
 }
 function AppContent() {
-  const [showBoot, setShowBoot] = useState(true);
+  const [showBoot, setShowBoot] = useState(false);
   const [hasBooted, setHasBooted] = useState(false);
   useEffect(() => {
-    // Check if we've already shown boot screen this session
+    const bootEnabled = localStorage.getItem('show_boot_screen') === 'true';
     const booted = sessionStorage.getItem('hell5tar_booted');
-    if (booted) {
+
+    if (!bootEnabled || booted) {
       setShowBoot(false);
       setHasBooted(true);
+      return;
     }
+
+    setShowBoot(true);
   }, []);
 
   useEffect(() => {
