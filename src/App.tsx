@@ -155,9 +155,7 @@ function AppContent() {
   };
   return <>
       {showBoot && !hasBooted && <BootScreen onComplete={handleBootComplete} />}
-      <div className="chain-overlay">
-        <AppRoutes />
-      </div>
+      <AppRoutes />
     </>;
 }
 const App = () => <QueryClientProvider client={queryClient}>
