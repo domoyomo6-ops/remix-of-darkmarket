@@ -25,6 +25,54 @@ export default function Install() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
 
+  const syncNotificationState = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setNotificationsEnabled(false);
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        setNotificationsEnabled(false);
+        return;
+      }
+
+      const subscriptionJson = subscription.toJSON();
+      const endpoint = subscriptionJson.endpoint;
+
+      if (!endpoint) {
+        setNotificationsEnabled(false);
+        return;
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        setNotificationsEnabled(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .select('id')
+        .eq('user_id', userData.user.id)
+        .eq('endpoint', endpoint)
+        .maybeSingle();
+
+      if (error) {
+        setNotificationsEnabled(false);
+        return;
+      }
+
+      setNotificationsEnabled(Boolean(data));
+    } catch (error) {
+      console.error('Failed to sync notification state', error);
+      setNotificationsEnabled(false);
+    }
+  };
+
   useEffect(() => {
     // Check if already installed
     const checkInstalled = () => {
@@ -38,9 +86,7 @@ export default function Install() {
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(iOS);
 
-    if (Notification.permission === 'granted') {
-      setNotificationsEnabled(true);
-    }
+    syncNotificationState();
 
     // Listen for install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -135,6 +181,8 @@ export default function Install() {
 
       setNotificationsEnabled(true);
       toast.success('Phone notifications enabled');
+
+      await syncNotificationState();
     } catch (error) {
       console.error(error);
       toast.error('Failed to enable notifications');

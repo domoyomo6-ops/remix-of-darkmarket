@@ -68,6 +68,43 @@ serve(async (req: Request) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const jwt = authHeader.replace("Bearer ", "").trim();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(jwt);
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid authorization token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin",
+    });
+
+    if (roleError) {
+      throw roleError;
+    }
+
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const {
       title,
       message,
