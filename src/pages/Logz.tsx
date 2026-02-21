@@ -123,11 +123,11 @@ export default function Logz() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 [perspective:1400px]">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <FileText className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-mono font-bold text-primary terminal-glow">LOGZ://</h1>
+          <h1 className="text-2xl font-mono font-bold text-primary terminal-glow">LOGZ://3D_TERMINAL</h1>
         </div>
 
         {/* Filters */}
@@ -163,7 +163,7 @@ export default function Logz() {
         </div>
 
         {/* Product Table */}
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-primary/40 rounded-xl overflow-hidden bg-black/60 shadow-[0_20px_70px_rgba(0,0,0,0.55),0_0_35px_rgba(34,197,94,0.14)] [transform:rotateX(5deg)] origin-top">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-card border-b border-border">
@@ -180,7 +180,7 @@ export default function Logz() {
                 {filteredProducts.map((product, idx) => (
                   <tr 
                     key={product.id} 
-                    className={`border-b border-border/50 hover:bg-card/50 transition-colors ${idx % 2 === 0 ? 'bg-background' : 'bg-card/20'}`}
+                    className={`border-b border-border/50 hover:bg-primary/10 hover:[transform:translateZ(22px)] transition-all duration-200 ${idx % 2 === 0 ? 'bg-background/85' : 'bg-card/35'}`}
                   >
                     <td className="p-3 font-mono text-foreground">{product.title}</td>
                     <td className="p-3 text-foreground">{product.short_description || '-'}</td>

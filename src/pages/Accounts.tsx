@@ -92,7 +92,7 @@ export default function Accounts() {
           <div className="flex items-center gap-2">
             <User className="w-6 h-6 text-primary" />
             <h1 className="text-2xl font-mono font-bold terminal-glow">
-              ACCOUNTS://
+              ACCOUNTS://3D_TERMINAL
             </h1>
           </div>
 
@@ -112,7 +112,7 @@ export default function Accounts() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 [perspective:1500px]">
           {filtered.map((p, i) => (
             <UltraCard
               key={p.id}
@@ -166,12 +166,12 @@ function UltraCard({
       ref={ref}
       onMouseMove={onMove}
       onMouseLeave={() => {
-        setStyle({ transform: 'perspective(1200px) rotateX(0) rotateY(0)' });
+        setStyle({ transform: 'perspective(1200px) rotateX(0) rotateY(0) translateZ(0)' });
         setGlow({});
       }}
       onClick={onNavigate}
       style={style}
-      className={`relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer transition-transform duration-200 ease-out ${bg} group border border-border/50`}
+      className={`relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer transition-transform duration-200 ease-out ${bg} group border border-primary/35 shadow-[0_20px_50px_rgba(0,0,0,0.35),0_0_25px_rgba(34,211,238,0.18)]`}
     >
       <div className="absolute inset-0 rounded-xl pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60" />

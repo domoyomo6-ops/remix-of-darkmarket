@@ -135,9 +135,9 @@ export default function Lounge() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,_rgba(217,70,239,0.18),_transparent_55%),radial-gradient(circle_at_80%_20%,_rgba(59,130,246,0.18),_transparent_45%),linear-gradient(180deg,_rgba(4,6,12,0.96),_rgba(2,2,8,0.98))]">
         {/* Header */}
-        <div className="p-4 border-b border-primary/20 bg-black/50 backdrop-blur-sm">
+        <div className="p-4 border-b border-fuchsia-400/30 bg-black/60 backdrop-blur-xl shadow-[0_0_40px_rgba(217,70,239,0.15)]">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
@@ -149,7 +149,7 @@ export default function Lounge() {
               </button>
               <div className="h-6 w-px bg-primary/20" />
               <h1 className="text-xl sm:text-2xl font-bold text-primary terminal-glow font-mono">
-                [ LOUNGE://LIVE ]
+                [ LOUNGE://NIGHTCLUB ]
               </h1>
             </div>
             
@@ -205,14 +205,14 @@ export default function Lounge() {
         {/* Main content */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Chat area */}
-          <div className="flex-1 flex flex-col min-h-0 lg:border-r border-primary/20">
+          <div className="flex-1 flex flex-col min-h-0 lg:border-r border-fuchsia-400/25 bg-black/30">
             <LoungeChat />
           </div>
 
           {/* Sidebar */}
-          <div className="w-full lg:w-80 border-t lg:border-t-0 border-primary/20 bg-black/30 overflow-y-auto">
+          <div className="w-full lg:w-80 border-t lg:border-t-0 border-fuchsia-400/25 bg-black/40 backdrop-blur-md overflow-y-auto">
             {/* Online users */}
-            <div className="p-4 border-b border-primary/20">
+            <div className="p-4 border-b border-fuchsia-400/20">
               <h3 className="text-sm font-mono text-primary mb-3 flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Online ({onlineUsers.length})
@@ -250,7 +250,7 @@ export default function Lounge() {
                     ) : (
                       <button
                         onClick={() => setSelectedVoiceRoom(room)}
-                        className="w-full p-3 rounded-lg bg-black/30 border border-primary/10 hover:border-primary/30 transition-colors text-left group"
+                        className="w-full p-3 rounded-lg bg-gradient-to-br from-fuchsia-950/40 via-black/70 to-cyan-950/30 border border-fuchsia-400/20 hover:border-fuchsia-300/60 hover:shadow-[0_0_24px_rgba(217,70,239,0.25)] transition-all duration-300 text-left group"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
