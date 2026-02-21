@@ -270,10 +270,10 @@ export default function Games() {
           <div className="container mx-auto px-4 py-10 relative z-20">
             <Card className="panel-3d border-primary/40 bg-black/55 max-w-3xl mx-auto">
               <CardHeader>
-                <CardTitle className="text-primary font-mono text-2xl flex items-center gap-2"><Rocket className="w-6 h-6" />SUPER_GAME_ROOM://ACCESS_GATE</CardTitle>
+                <CardTitle className="text-primary font-mono text-2xl flex items-center gap-2"><Rocket className="w-6 h-6" />GAME_ROOM_SITE_GATE://CHAINED_STEEL_ACCESS</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <p className="font-mono text-sm text-muted-foreground">Everyone must buy a chip stack before entering the Unity-style 3D game room.</p>
+                <p className="font-mono text-sm text-muted-foreground">Everyone must buy a chip stack before entering the immersive chained-steel 3D game room.</p>
                 <div className="text-xs font-mono text-primary/90 flex items-center gap-2"><Coins className="w-4 h-4" />Wallet balance detected: ${walletBalance.toFixed(2)}</div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {chipPacks.map((pack) => (
@@ -312,8 +312,8 @@ export default function Games() {
                 <span className="text-xs font-mono text-primary">CASINO://ACTIVE</span>
                 <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-mono font-bold text-primary terminal-glow">GAME_ROOM://</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground font-mono mt-1">Casino floor active • Live tables • Wallet settles each outcome</p>
+              <h1 className="text-2xl sm:text-3xl font-mono font-bold text-primary terminal-glow">GAME_ROOM_SITE_GATE://</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground font-mono mt-1">Casino floor active • Chains + steel ambience enabled • Wallet settles each outcome</p>
             </div>
             
             <Dialog open={showCreate} onOpenChange={setShowCreate}>

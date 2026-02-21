@@ -85,9 +85,9 @@ const SiteGate = () => {
 `;
 
   const unityGateNotice = [
-    "> UNITY 3D IMMERSION MODE: ONLINE",
+    "> GAME ROOM SITE GATE WORDING: STEEL-LOCKED",
+    "> CHAINS + STEEL OVERLAY ACTIVE ON EVERY PAGE + TERMINAL BOX",
     "> WALLET LINK REQUIRED BEFORE ANY PURCHASE",
-    "> DEPOSIT PATHS: SITE BALANCE / CASH APP / TELEGRAM STARS / VENMO / MORE",
     "> CASHOUT + BUY ACCESS ROUTES ARE WALLET-GATED ONLY",
   ];
 
@@ -213,8 +213,8 @@ const SiteGate = () => {
       />
 
       {/* MAIN CRT MONITOR AREA */}
-      <div className="w-full max-w-xl relative z-10" style={{ perspective: "1000px" }}>
-        <div className="relative rounded-xl p-3 sm:p-4"
+      <div className="w-full max-w-xl relative z-10 chain-overlay" style={{ perspective: "1000px" }}>
+        <div className="relative rounded-xl p-3 sm:p-4 steel-terminal-box"
           style={{
             background: `linear-gradient(145deg, #1a1a1e 0%, #0d0d0f 50%, #080809 100%)`,
             boxShadow: "0 30px 60px rgba(0,0,0,0.8),0 50px 100px rgba(0,0,0,0.6)",
@@ -343,7 +343,7 @@ const SiteGate = () => {
                 style={{ background: `rgba(${COLORS.main},0.05)`, borderColor: `rgba(${COLORS.main},0.15)` }}
               >
                 <span className="text-xs" style={{ color: `rgba(${COLORS.main},0.8)`, textShadow: `0 0 8px rgba(${COLORS.main},0.6)` }}>
-                  hell5tar@secure-gateway ~{" "}
+                  hell5tar@game-room-site-gate ~{" "}
                   <span className={`phosphor-trail ${phosphorPulse ? "phosphor-pulse" : ""}`}>
                     {formatTime(currentTime)}
                   </span>
@@ -390,7 +390,7 @@ const SiteGate = () => {
                   }}
                 >
                   <p className="text-[10px] uppercase tracking-[0.18em]" style={{ color: `rgba(${COLORS.highlight},0.85)` }}>
-                    SiteGate // Unity 3D Operations Console
+                    SiteGate // Steel Chain 3D Game Room Console
                   </p>
                   {unityGateNotice.map((line) => (
                     <p key={line} className="text-[10px] sm:text-[11px] leading-tight" style={{ color: `rgba(${COLORS.main},0.78)` }}>
