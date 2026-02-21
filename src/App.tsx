@@ -30,6 +30,7 @@ const Lounge = lazy(() => import("./pages/Lounge"));
 const Announcements = lazy(() => import("./pages/Announcements"));
 const Homepage = lazy(() => import("./pages/Homepage"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
+const GiftCardShop = lazy(() => import("./pages/GiftCardShop"));
 const Transactions = lazy(() => import("./pages/Transactions"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -125,6 +126,7 @@ function AppRoutes() {
           <Route path="/forum" element={<Forum />} />
           <Route path="/lounge" element={<Lounge />} />
           <Route path="/giftcards" element={<GiftCards />} />
+          <Route path="/giftcard-shop" element={<GiftCardShop />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/settings" element={<Settings />} />

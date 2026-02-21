@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt, FileText, UserCircle, ShoppingCart } from 'lucide-react';
+import { LogOut, User, Settings, ShoppingBag, Terminal, Menu, X, Download, Gamepad2, Radio, MessageSquare, Receipt, FileText, UserCircle, ShoppingCart, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -76,6 +76,14 @@ export default function Header() {
       >
         <UserCircle className="w-4 h-4" />
         [ACCOUNTS]
+      </Link>
+      <Link 
+        to="/giftcard-shop" 
+        onClick={onNavigate}
+        className={`${mobile ? 'block py-3 text-lg' : 'text-sm'} text-pink-400 hover:text-pink-300 transition-all duration-300 font-mono uppercase tracking-wide hover:terminal-glow flex items-center gap-2`}
+      >
+        <Gift className="w-4 h-4" />
+        [GIFTCARDS]
       </Link>
       <Link 
         to="/lounge" 
