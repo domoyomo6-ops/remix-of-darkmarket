@@ -73,7 +73,7 @@ export function GlitchText({
 // Terminal window chrome
 export function TerminalWindow({ 
   children, 
-  title = 'terminal',
+  title = 'steel-terminal',
   className = '',
   variant = 'default'
 }: { 
@@ -98,14 +98,14 @@ export function TerminalWindow({
 
   return (
     <div className={`
-      relative rounded-lg overflow-hidden
+      relative rounded-lg overflow-hidden steel-terminal-box chain-overlay
       bg-card border ${borderColor}
       ${glowColor}
       backdrop-blur-sm
       ${className}
     `}>
       {/* Terminal chrome header */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-card border-b border-primary/20">
+      <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border-b border-primary/20">
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-destructive/80 hover:bg-destructive transition-colors cursor-pointer" />
           <div className="w-3 h-3 rounded-full bg-warning/80 hover:bg-warning transition-colors cursor-pointer" />

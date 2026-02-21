@@ -155,7 +155,7 @@ function AppContent() {
   };
   return <>
       {showBoot && !hasBooted && <BootScreen onComplete={handleBootComplete} />}
-      <div className="">
+      <div className="chain-overlay">
         <AppRoutes />
       </div>
     </>;
