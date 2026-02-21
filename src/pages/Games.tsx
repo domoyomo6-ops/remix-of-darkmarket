@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dice1, Dice5, CircleDot, Spade, Users, Eye, Trophy, Plus, Loader2, Terminal, Sparkles, Landmark, ShieldCheck } from 'lucide-react';
+import { Dice1, Dice5, CircleDot, Spade, Users, Eye, Trophy, Plus, Loader2, Terminal, Sparkles, Landmark, ShieldCheck, Coins, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import DiceGame from '@/components/games/DiceGame';
 import BlackjackGame from '@/components/games/BlackjackGame';
 import RouletteGame from '@/components/games/RouletteGame';
 import CoinflipGame from '@/components/games/CoinflipGame';
+import Scene3D from '@/components/Scene3D';
 
 type GameType = 'dice' | 'blackjack' | 'roulette' | 'coinflip';
 type LobbyType = '1v1' | '2v2' | 'vs_house' | 'spectate';
@@ -44,6 +45,15 @@ export default function Games() {
     lobby_type: 'vs_house' as LobbyType,
     wager_amount: 1,
   });
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [chipBalance, setChipBalance] = useState(0);
+  const [hasRoomAccess, setHasRoomAccess] = useState(false);
+
+  const chipPacks = [
+    { id: 'starter', chips: 50, price: 5, vibe: 'Starter stack' },
+    { id: 'pro', chips: 150, price: 12, vibe: 'High roller warmup' },
+    { id: 'legend', chips: 400, price: 25, vibe: 'Legendary party mode' },
+  ] as const;
 
   useEffect(() => {
     fetchLobbies();
@@ -57,6 +67,79 @@ export default function Games() {
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const accessKey = `game-room-chip-pass:${user.id}`;
+    const savedAccess = localStorage.getItem(accessKey);
+    if (savedAccess) {
+      const parsed = JSON.parse(savedAccess) as { chips: number };
+      if (parsed?.chips > 0) {
+        setChipBalance(parsed.chips);
+        setHasRoomAccess(true);
+      }
+    }
+
+    const fetchWallet = async () => {
+      const { data } = await supabase
+        .from('user_wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+      setWalletBalance(Number(data?.balance || 0));
+    };
+
+    fetchWallet();
+  }, [user]);
+
+  const saveChipPass = (chips: number) => {
+    if (!user) return;
+    localStorage.setItem(`game-room-chip-pass:${user.id}`, JSON.stringify({ chips }));
+  };
+
+  const requireChips = (amount: number) => {
+    if (amount <= 0) return true;
+    if (chipBalance < amount) {
+      toast({
+        title: 'More chips needed',
+        description: `You need ${amount.toFixed(2)} chips to join this action.`,
+        variant: 'destructive',
+      });
+      setHasRoomAccess(false);
+      return false;
+    }
+
+    return true;
+  };
+
+  const consumeChips = (amount: number) => {
+    if (amount <= 0) return;
+    const updated = Math.max(0, chipBalance - amount);
+    setChipBalance(updated);
+    saveChipPass(updated);
+    if (updated <= 0) {
+      setHasRoomAccess(false);
+      toast({ title: 'Chip stack empty', description: 'Buy another stack to keep playing in the 3D room.' });
+    }
+  };
+
+  const buyChipPack = (pack: (typeof chipPacks)[number]) => {
+    if (walletBalance < pack.price) {
+      toast({
+        title: 'Insufficient wallet balance',
+        description: `You need $${pack.price} in your wallet for this chip pack.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setChipBalance(pack.chips);
+    saveChipPass(pack.chips);
+    setHasRoomAccess(true);
+    toast({ title: 'Chip pack activated', description: `${pack.chips} chips loaded. Welcome to the super game room!` });
+  };
 
   const fetchLobbies = async () => {
     const { data, error } = await supabase
@@ -73,6 +156,7 @@ export default function Games() {
 
   const createGame = async () => {
     if (!user) return;
+    if (!requireChips(newGame.wager_amount)) return;
     setCreating(true);
     
     try {
@@ -100,6 +184,7 @@ export default function Games() {
       const wagerData = wagerResult.data as { success: boolean; error?: string };
       if (!wagerData.success) throw new Error(wagerData.error);
 
+      consumeChips(newGame.wager_amount);
       setActiveSession(data);
       setActiveGame(newGame.game_type);
       setShowCreate(false);
@@ -113,6 +198,7 @@ export default function Games() {
 
   const joinGame = async (session: GameSession, asSpectator: boolean = false) => {
     if (!user) return;
+    if (!asSpectator && !requireChips(session.wager_amount)) return;
 
     try {
       const { data, error } = await supabase.rpc('place_game_wager', {
@@ -125,6 +211,7 @@ export default function Games() {
       const result = data as { success: boolean; error?: string };
       if (!result.success) throw new Error(result.error);
 
+      if (!asSpectator) consumeChips(session.wager_amount);
       setActiveSession(session);
       setActiveGame(session.game_type);
       toast({ title: asSpectator ? "Now spectating" : "Joined game!" });
@@ -174,9 +261,44 @@ export default function Games() {
     );
   }
 
+  if (!hasRoomAccess) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen relative overflow-hidden">
+          <Scene3D />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,255,170,0.2),transparent_40%),radial-gradient(circle_at_bottom,rgba(130,80,255,0.18),transparent_55%)]" />
+          <div className="container mx-auto px-4 py-10 relative z-20">
+            <Card className="panel-3d border-primary/40 bg-black/55 max-w-3xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-primary font-mono text-2xl flex items-center gap-2"><Rocket className="w-6 h-6" />SUPER_GAME_ROOM://ACCESS_GATE</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <p className="font-mono text-sm text-muted-foreground">Everyone must buy a chip stack before entering the Unity-style 3D game room.</p>
+                <div className="text-xs font-mono text-primary/90 flex items-center gap-2"><Coins className="w-4 h-4" />Wallet balance detected: ${walletBalance.toFixed(2)}</div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {chipPacks.map((pack) => (
+                    <Card key={pack.id} className="panel-3d border-primary/30 bg-black/45">
+                      <CardContent className="p-4 space-y-2">
+                        <p className="font-mono text-primary text-sm">{pack.vibe}</p>
+                        <p className="font-mono text-2xl font-bold">{pack.chips}<span className="text-xs ml-1 text-muted-foreground">chips</span></p>
+                        <p className="font-mono text-xs text-muted-foreground">Entry price: ${pack.price}</p>
+                        <Button className="w-full crt-button font-mono" onClick={() => buyChipPack(pack)}>BUY CHIPS</Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="min-h-screen relative overflow-hidden">
+        <Scene3D />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,0,200,0.15),transparent_45%),radial-gradient(circle_at_bottom,rgba(0,255,255,0.12),transparent_55%)]" />
         {/* Scanline overlay */}
         <div className="pointer-events-none fixed inset-0 opacity-[0.03] bg-[linear-gradient(rgba(0,255,150,0.2)_1px,transparent_1px)] bg-[size:100%_3px] z-10" />
@@ -249,6 +371,12 @@ export default function Games() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
+            <Card className="panel-3d border-primary/25 bg-black/35">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-mono text-sm"><Coins className="w-4 h-4" />CHIP_STACK</div>
+                <p className="text-xs text-muted-foreground font-mono">{chipBalance.toFixed(2)} chips ready. Bets consume chips before joining tables.</p>
+              </CardContent>
+            </Card>
             <Card className="panel-3d border-primary/25 bg-black/35">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2 text-primary font-mono text-sm"><Sparkles className="w-4 h-4" />IMMERSIVE_FLOOR</div>
