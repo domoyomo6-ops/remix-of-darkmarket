@@ -31,6 +31,7 @@ export default function SyncedMusicPlayer() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [position, setPosition] = useState({ x: 24, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const isVideo = useMemo(() => {
     if (!nowPlaying?.source_url) return true;
@@ -188,12 +189,22 @@ export default function SyncedMusicPlayer() {
   if (!user) return null;
 
   return (
-    <div
-      className={`z-40 border border-primary/30 bg-zinc-950/95 shadow-2xl shadow-primary/10 rounded-xl overflow-hidden ${
-        isFullscreen ? 'fixed inset-3' : 'fixed w-[420px] max-w-[calc(100vw-16px)] bottom-4'
-      }`}
-      style={!isFullscreen ? { left: position.x } : undefined}
-    >
+    <>
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="fixed bottom-6 right-[94px] z-50 h-16 w-16 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex flex-col items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:shadow-[0_0_50px_rgba(6,182,212,0.65)] transition-all border border-cyan-300/50"
+      >
+        <Clapperboard className="w-6 h-6" />
+        <span className="text-[9px] font-mono uppercase tracking-wide mt-0.5">Theater</span>
+      </button>
+
+      {isOpen && (
+        <div
+          className={`z-40 border border-primary/30 bg-zinc-950/95 shadow-2xl shadow-primary/10 rounded-xl overflow-hidden ${
+            isFullscreen ? 'fixed inset-3' : 'fixed w-[420px] max-w-[calc(100vw-16px)] bottom-24'
+          }`}
+          style={!isFullscreen ? { left: position.x } : undefined}
+        >
       <div
         className="px-3 py-2 bg-zinc-900 border-b border-primary/20 flex items-center justify-between cursor-move"
         onMouseDown={() => setDragging(true)}
@@ -275,6 +286,8 @@ export default function SyncedMusicPlayer() {
           </div>
         )}
       </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

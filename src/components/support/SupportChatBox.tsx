@@ -270,9 +270,10 @@ export default function SupportChatBox() {
       {/* Floating Button */}
       <button
         onClick={() => { setIsOpen(true); setIsMinimized(false); markAsRead(); }}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-xl bg-gradient-to-br from-primary/90 to-primary text-primary-foreground flex items-center justify-center shadow-[0_0_30px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_50px_hsl(var(--primary)/0.7)] transition-all border border-primary/50 group"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex flex-col items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.45)] hover:shadow-[0_0_50px_rgba(34,197,94,0.65)] transition-all border border-emerald-300/50 group"
       >
-        <Terminal className="w-7 h-7 group-hover:scale-110 transition-transform" />
+        <Terminal className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <span className="text-[9px] font-mono uppercase tracking-wide mt-0.5">Support</span>
         {unreadCount > 0 && (
           <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-white text-xs flex items-center justify-center font-bold animate-bounce shadow-lg">
             {unreadCount}
