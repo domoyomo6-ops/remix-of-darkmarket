@@ -27,6 +27,7 @@ const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(ma
 export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps) {
   const { user, isAdmin } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isSpectating, setIsSpectating] = useState(false);
   const [spectateAudio, setSpectateAudio] = useState(true);
   const [spectateChat, setSpectateChat] = useState(true);
@@ -223,16 +224,26 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
   };
 
   return (
-    <div
-      ref={panelRef}
-      className={`fixed w-80 z-50 transition-all duration-300 select-none ${
-        isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]'
-      }`}
-      style={{
-        left: panelPos.x,
-        top: panelPos.y,
-      }}
-    >
+    <>
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="fixed bottom-6 right-[182px] z-50 h-16 w-16 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white flex flex-col items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.45)] hover:shadow-[0_0_50px_rgba(139,92,246,0.65)] transition-all border border-violet-300/50"
+      >
+        <Crown className="w-6 h-6" />
+        <span className="text-[9px] font-mono uppercase tracking-wide mt-0.5">Admin</span>
+      </button>
+
+      {isOpen && (
+        <div
+          ref={panelRef}
+          className={`fixed w-80 z-50 transition-all duration-300 select-none ${
+            isExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]'
+          }`}
+          style={{
+            left: panelPos.x,
+            top: panelPos.y,
+          }}
+        >
       {/* VIP Header (DRAG HANDLE) */}
       <div
         onPointerDown={onHeaderPointerDown}
@@ -496,9 +507,8 @@ export default function VIPCommandCenter({ onlineUsers }: VIPCommandCenterProps)
           </div>
         </div>
       </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
-
-
-
