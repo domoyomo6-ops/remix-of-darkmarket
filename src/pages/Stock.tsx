@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, RotateCcw, ShoppingCart, Plus } from 'lucide-react';
+import { Loader2, RotateCcw, ShoppingCart, Plus, Sparkles, Boxes } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { addToCart } from '@/pages/Cart';
 import { Badge } from '@/components/ui/badge';
@@ -115,6 +115,15 @@ export default function Stock() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-fuchsia-500/15 via-primary/10 to-cyan-500/15 p-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h1 className="text-2xl font-mono font-bold terminal-glow flex items-center gap-2"><Sparkles className="w-5 h-5" />STOCK://LIVE_MARKET</h1>
+              <p className="text-xs text-muted-foreground font-mono">Immersive stock terminal with quick batch cart actions.</p>
+            </div>
+            <Badge className="font-mono"><Boxes className="w-3 h-3 mr-1" />{filteredProducts.length} LIVE ITEMS</Badge>
+          </div>
+        </div>
         <div className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={resetFilters}>
