@@ -69,6 +69,10 @@ export default function GiftCardManager() {
   // Form state
   const [amount, setAmount] = useState('25');
   const [expiresIn, setExpiresIn] = useState('');
+  const [stockStore, setStockStore] = useState('Amazon');
+  const [stockRegion, setStockRegion] = useState('USA');
+  const [stockOptionLabel, setStockOptionLabel] = useState('$25 Amazon Card');
+  const [stockRating, setStockRating] = useState('5.0');
   const [stockAmount, setStockAmount] = useState('25');
   const [stockCost, setStockCost] = useState('20');
   const [stockQuantity, setStockQuantity] = useState('10');
@@ -275,9 +279,10 @@ export default function GiftCardManager() {
     const amountValue = Number(stockAmount);
     const costValue = Number(stockCost);
     const quantityValue = Number(stockQuantity);
+    const ratingValue = Number(stockRating);
 
     if (!Number.isFinite(amountValue) || amountValue <= 0) {
-      toast.error('Gift card amount must be greater than 0.');
+      toast.error('Denomination amount must be greater than 0.');
       return;
     }
 
@@ -291,19 +296,34 @@ export default function GiftCardManager() {
       return;
     }
 
+    if (!Number.isFinite(ratingValue) || ratingValue <= 0 || ratingValue > 5) {
+      toast.error('Rating must be between 0.1 and 5.0.');
+      return;
+    }
+
+    const storeName = stockStore.trim();
+    if (!storeName) {
+      toast.error('Store name is required.');
+      return;
+    }
+
+    const regionName = stockRegion.trim() || 'GLOBAL';
+
     setCreatingStock(true);
 
     const amountLabel = amountValue % 1 === 0 ? `${amountValue}` : amountValue.toFixed(2);
-    const title = stockLabel.trim() || `$${amountLabel} Gift Card`;
+    const listingTitle = stockLabel.trim() || `${storeName} Giftcards [${regionName}]`;
+    const optionLabel = stockOptionLabel.trim() || `$${amountLabel} ${storeName} Card`;
 
     const rows = Array.from({ length: quantityValue }).map((_, index) => ({
-      title,
-      description: `Gift card balance: $${amountLabel}. Unit ${index + 1}/${quantityValue}.`,
-      short_description: `Balance $${amountLabel} • Instant digital delivery`,
+      title: optionLabel,
+      description: `Store listing: ${listingTitle}. Unit ${index + 1}/${quantityValue}. 24 hour replacement support included.`,
+      short_description: `option:${optionLabel}|rating:${ratingValue.toFixed(1)}|denomination:${amountLabel}`,
       price: costValue,
       category: 'assets' as const,
       product_type: 'giftcards',
-      brand: 'Gift Cards',
+      brand: storeName,
+      country: regionName,
       image_url: stockImageUrl.trim() || null,
       is_active: true,
     }));
@@ -315,8 +335,8 @@ export default function GiftCardManager() {
       return;
     }
 
-    toast.success(`Added ${quantityValue} x ${title} at $${costValue.toFixed(2)} each.`);
-    setStockLabel('');
+    toast.success(`Added ${quantityValue} x ${optionLabel} for ${storeName} at $${costValue.toFixed(2)} each.`);
+    setStockLabel(listingTitle);
     setStockImageUrl('');
     setCreatingStock(false);
   };
@@ -426,17 +446,33 @@ export default function GiftCardManager() {
       <div className="panel-3d rounded-lg p-5 border border-primary/20 bg-primary/5 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="font-mono font-bold text-primary text-sm sm:text-base">Gift Card Stock Manager Add-on</h3>
+            <h3 className="font-mono font-bold text-primary text-sm sm:text-base">Store Listing Stock Manager</h3>
             <p className="font-mono text-xs text-muted-foreground mt-1">
-              Drop inventory bundles for the new Gift Card store page with custom amount, price, and quantity.
+              Build third-party gift card listings (Amazon, Visa, etc.) with denomination options, ratings, and inventory batches.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           <div>
-            <Label className="text-xs font-mono text-primary">Gift Card Amount ($)</Label>
+            <Label className="text-xs font-mono text-primary">Store Name</Label>
+            <Input value={stockStore} onChange={(e) => setStockStore(e.target.value)} placeholder="Amazon" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Region</Label>
+            <Input value={stockRegion} onChange={(e) => setStockRegion(e.target.value)} placeholder="USA" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Option Label</Label>
+            <Input value={stockOptionLabel} onChange={(e) => setStockOptionLabel(e.target.value)} placeholder="$25 Amazon Card" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Denomination ($)</Label>
             <Input value={stockAmount} onChange={(e) => setStockAmount(e.target.value)} type="number" min="1" step="0.01" className="crt-input mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs font-mono text-primary">Rating (0-5)</Label>
+            <Input value={stockRating} onChange={(e) => setStockRating(e.target.value)} type="number" min="0.1" max="5" step="0.1" className="crt-input mt-1" />
           </div>
           <div>
             <Label className="text-xs font-mono text-primary">Sell Cost ($)</Label>
@@ -447,8 +483,8 @@ export default function GiftCardManager() {
             <Input value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} type="number" min="1" step="1" className="crt-input mt-1" />
           </div>
           <div>
-            <Label className="text-xs font-mono text-primary">Display Label (optional)</Label>
-            <Input value={stockLabel} onChange={(e) => setStockLabel(e.target.value)} placeholder="$25 Gift Card" className="crt-input mt-1" />
+            <Label className="text-xs font-mono text-primary">Listing Header (optional)</Label>
+            <Input value={stockLabel} onChange={(e) => setStockLabel(e.target.value)} placeholder="Amazon Giftcards [USA]" className="crt-input mt-1" />
           </div>
           <div>
             <Label className="text-xs font-mono text-primary">Image URL (optional)</Label>
@@ -462,7 +498,7 @@ export default function GiftCardManager() {
           className="crt-button font-mono"
         >
           {creatingStock ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-          Add Gift Card Stock Batch
+          Add Listing Stock Batch
         </Button>
       </div>
 
