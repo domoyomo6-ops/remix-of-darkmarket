@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Settings as SettingsIcon, Lock, User, Mail, Moon, Sun, ImagePlus, BellRing } from 'lucide-react';
-import { applyAppearance, getBackgroundImagePreference, getThemePreference, saveAppearance, ThemePreference } from '@/lib/appearance';
+import { Settings as SettingsIcon, Lock, User, Mail, Moon, Sun, ImagePlus, BellRing, Palette } from 'lucide-react';
+import { applyAppearance, getBackgroundImagePreference, getThemePreference, getThemeVariantPreference, saveAppearance, ThemePreference, ThemeVariant } from '@/lib/appearance';
 
 export default function Settings() {
   const { user } = useAuth();
@@ -17,14 +17,15 @@ export default function Settings() {
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
   const [theme, setTheme] = useState<ThemePreference>(() => getThemePreference());
   const [backgroundImage, setBackgroundImage] = useState(() => getBackgroundImagePreference());
+  const [themeVariant, setThemeVariant] = useState<ThemeVariant>(() => getThemeVariantPreference());
   const [updatesNotificationEnabled, setUpdatesNotificationEnabled] = useState(
     () => localStorage.getItem('updates_notifications_enabled') === 'true'
   );
   const [loading, setLoading] = useState(false);
 
   const handleAppearanceSave = () => {
-    saveAppearance(theme, backgroundImage);
-    applyAppearance(theme, backgroundImage);
+    saveAppearance(theme, backgroundImage, themeVariant);
+    applyAppearance(theme, backgroundImage, themeVariant);
     toast.success('Appearance updated');
   };
 
@@ -125,6 +126,30 @@ export default function Settings() {
               </div>
             </div>
 
+
+            <div>
+              <Label className="font-mono text-xs text-muted-foreground mb-1 block">
+                <Palette className="w-3 h-3 inline mr-1" />THEME_VARIANT
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'neon-night', label: 'Neon Night' },
+                  { id: 'violet-club', label: 'Violet Club' },
+                  { id: 'ocean-grid', label: 'Ocean Grid' },
+                  { id: 'sunset-arcade', label: 'Sunset Arcade' },
+                ].map((variant) => (
+                  <Button
+                    key={variant.id}
+                    type="button"
+                    variant={themeVariant === variant.id ? 'default' : 'outline'}
+                    className="font-mono text-xs"
+                    onClick={() => setThemeVariant(variant.id as ThemeVariant)}
+                  >
+                    {variant.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
             <div>
               <Label className="font-mono text-xs text-muted-foreground mb-1 block">
                 <ImagePlus className="w-3 h-3 inline mr-1" />BACKGROUND_IMAGE_URL
@@ -144,8 +169,8 @@ export default function Settings() {
                 variant="outline"
                 onClick={() => {
                   setBackgroundImage('');
-                  saveAppearance(theme, '');
-                  applyAppearance(theme, '');
+                  saveAppearance(theme, '', themeVariant);
+                  applyAppearance(theme, '', themeVariant);
                 }}
               >
                 Clear BG

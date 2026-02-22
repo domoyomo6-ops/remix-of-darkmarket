@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import BootScreen from "@/components/BootScreen";
 import ChunkErrorBoundary from "@/components/ChunkErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
-import { applyAppearance, getBackgroundImagePreference, getThemePreference } from "@/lib/appearance";
+import { applyAppearance, getBackgroundImagePreference, getThemePreference, getThemeVariantPreference } from "@/lib/appearance";
 import { toast } from "sonner";
 
 // Lazy load all route components for code splitting
@@ -152,7 +152,7 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    applyAppearance(getThemePreference(), getBackgroundImagePreference());
+    applyAppearance(getThemePreference(), getBackgroundImagePreference(), getThemeVariantPreference());
   }, []);
   const handleBootComplete = () => {
     setShowBoot(false);

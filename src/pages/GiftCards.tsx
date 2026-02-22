@@ -10,6 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 interface GiftCard {
   id: string;
   code: string;
+  name?: string | null;
+  description?: string | null;
   balance: number;
   initial_balance: number;
   status: string;
@@ -140,9 +142,13 @@ export default function GiftCards() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <code className="text-lg font-mono font-bold text-primary terminal-glow">
-                            {card.code}
-                          </code>
+                          <div className="space-y-1">
+                            <p className="text-sm font-mono text-primary/90">{card.name || 'Gift Card'}</p>
+                            <code className="text-lg font-mono font-bold text-primary terminal-glow">
+                              {card.code}
+                            </code>
+                            <p className="text-xs text-muted-foreground">{card.description || 'Digital balance card redeemable in wallet.'}</p>
+                          </div>
                           {getStatusBadge(card.status)}
                         </div>
                         

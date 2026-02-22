@@ -29,7 +29,7 @@ export default function SyncedMusicPlayer() {
   const [draftUrl, setDraftUrl] = useState('');
   const [draftType, setDraftType] = useState<'audio' | 'video'>('video');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [position, setPosition] = useState({ x: 24, y: 120 });
+  const [position, setPosition] = useState({ x: 24, y: 0 });
   const [dragging, setDragging] = useState(false);
 
   const isVideo = useMemo(() => {
@@ -170,8 +170,8 @@ export default function SyncedMusicPlayer() {
     const onMove = (event: MouseEvent) => {
       if (!dragging || isFullscreen) return;
       setPosition((prev) => ({
-        x: clamp(prev.x + event.movementX, 8, window.innerWidth - 380),
-        y: clamp(prev.y + event.movementY, 72, window.innerHeight - 320),
+        x: clamp(prev.x + event.movementX, 8, window.innerWidth - 460),
+        y: 0,
       }));
     };
 
@@ -190,9 +190,9 @@ export default function SyncedMusicPlayer() {
   return (
     <div
       className={`z-40 border border-primary/30 bg-zinc-950/95 shadow-2xl shadow-primary/10 rounded-xl overflow-hidden ${
-        isFullscreen ? 'fixed inset-6' : 'fixed w-[360px]'
+        isFullscreen ? 'fixed inset-3' : 'fixed w-[420px] max-w-[calc(100vw-16px)] bottom-4'
       }`}
-      style={!isFullscreen ? { left: position.x, top: position.y } : undefined}
+      style={!isFullscreen ? { left: position.x } : undefined}
     >
       <div
         className="px-3 py-2 bg-zinc-900 border-b border-primary/20 flex items-center justify-between cursor-move"
@@ -218,7 +218,7 @@ export default function SyncedMusicPlayer() {
               src={nowPlaying.source_url}
               controls
               playsInline
-              className={`${isVideo ? 'aspect-video' : 'h-16'} w-full bg-black`}
+              className={`${isVideo ? 'aspect-video' : 'h-20'} w-full bg-black object-cover`}
             />
           ) : (
             <div className="aspect-video grid place-items-center text-muted-foreground text-sm">

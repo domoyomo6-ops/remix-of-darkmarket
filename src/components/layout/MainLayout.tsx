@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import Header from './Header';
 import SupportChatBox from '@/components/support/SupportChatBox';
 import ParallaxBackground from '@/components/ParallaxBackground';
+import SyncedMusicPlayer from '@/components/lounge/SyncedMusicPlayer';
 interface MainLayoutProps {
   children: ReactNode;
 }
@@ -13,5 +14,6 @@ export default function MainLayout({
       <Header />
        <main className="relative z-10">{children}</main>
       <SupportChatBox />
+      <SyncedMusicPlayer />
     </div>;
 }

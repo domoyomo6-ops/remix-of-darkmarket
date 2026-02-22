@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, User, ShoppingCart } from 'lucide-react';
+import { Loader2, User, ShoppingCart, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -87,6 +87,13 @@ export default function Accounts() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-violet-500/10 to-fuchsia-500/10 p-4">
+          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+            <Sparkles className="w-4 h-4 text-primary" />
+            Upgraded account vault cards with hover depth and fast add-to-cart actions
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">

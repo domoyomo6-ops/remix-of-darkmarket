@@ -169,6 +169,35 @@
     opacity: 0.9;
   }
 
+
+body[data-theme-variant='neon-night']::before {
+  filter: saturate(170%) hue-rotate(0deg);
+}
+
+body[data-theme-variant='violet-club']::before {
+  background:
+    linear-gradient(120deg, rgba(182, 102, 255, 0.2), rgba(255, 72, 184, 0.12)),
+    radial-gradient(circle at 16% 22%, rgba(142, 68, 255, 0.3), transparent 42%),
+    radial-gradient(circle at 80% 28%, rgba(65, 105, 255, 0.28), transparent 48%),
+    radial-gradient(circle at 54% 78%, rgba(250, 88, 182, 0.2), transparent 40%);
+}
+
+body[data-theme-variant='ocean-grid']::before {
+  background:
+    linear-gradient(135deg, rgba(0, 170, 220, 0.2), rgba(10, 244, 207, 0.1)),
+    radial-gradient(circle at 20% 18%, rgba(64, 224, 255, 0.25), transparent 40%),
+    radial-gradient(circle at 82% 30%, rgba(0, 128, 255, 0.24), transparent 46%),
+    repeating-linear-gradient(90deg, rgba(150, 240, 255, 0.05) 0 1px, transparent 1px 28px);
+}
+
+body[data-theme-variant='sunset-arcade']::before {
+  background:
+    linear-gradient(125deg, rgba(255, 88, 88, 0.18), rgba(255, 172, 64, 0.14)),
+    radial-gradient(circle at 14% 18%, rgba(255, 132, 0, 0.24), transparent 40%),
+    radial-gradient(circle at 84% 24%, rgba(255, 70, 140, 0.24), transparent 43%),
+    radial-gradient(circle at 46% 84%, rgba(255, 214, 102, 0.16), transparent 36%);
+}
+
   body::after {
     background:
       repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 6px),
