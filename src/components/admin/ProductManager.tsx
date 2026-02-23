@@ -18,7 +18,7 @@ interface Product {
   short_description: string | null;
   price: number;
   category: 'software' | 'courses' | 'templates' | 'assets';
-  product_type: 'stock' | 'logz' | 'accounts';
+  product_type: 'stock' | 'logz' | 'accounts' | 'giftcards';
   image_url: string | null;
   file_url: string | null;
   is_active: boolean;
@@ -38,7 +38,7 @@ export default function ProductManager() {
     short_description: '',
     price: 0,
     category: 'software' as 'software' | 'courses' | 'templates' | 'assets',
-    product_type: 'stock' as 'stock' | 'logz' | 'accounts',
+    product_type: 'stock' as 'stock' | 'logz' | 'accounts' | 'giftcards',
     image_url: '',
     file_url: '',
     is_active: true,
@@ -461,7 +461,7 @@ Hurry! Limited quantities available.`,
                 <Label className="font-mono text-xs text-muted-foreground">PRODUCT TYPE</Label>
                 <Select 
                   value={formData.product_type} 
-                  onValueChange={(value: 'stock' | 'logz' | 'accounts') => 
+                  onValueChange={(value: 'stock' | 'logz' | 'accounts' | 'giftcards') => 
                     setFormData({ ...formData, product_type: value })
                   }
                 >
@@ -472,6 +472,7 @@ Hurry! Limited quantities available.`,
                     <SelectItem value="stock">STOCK (Cards/BINs)</SelectItem>
                     <SelectItem value="logz">LOGZ (Logs/Dumps)</SelectItem>
                     <SelectItem value="accounts">ACCOUNTS (Logins)</SelectItem>
+                    <SelectItem value="giftcards">GIFT CARDS (Store Listings)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
