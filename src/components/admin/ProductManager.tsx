@@ -46,7 +46,6 @@ export default function ProductManager() {
     country: '',
   });
   const [bulkStockText, setBulkStockText] = useState('');
-  const [giftCardBulkText, setGiftCardBulkText] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -318,150 +317,6 @@ Hurry! Limited quantities available.`,
     fetchProducts();
   };
 
-  type ParsedGiftCardLine = {
-    store: string;
-    region: string;
-    amount: string;
-    sell: string;
-    quantity: string;
-    rating: string;
-    image: string;
-  };
-
-  const parseGiftCardDelimitedLine = (line: string): ParsedGiftCardLine | null => {
-    const delimiter = line.includes('|') ? '|' : ',';
-    const parts = line.split(delimiter).map((part) => part.trim());
-    if (parts.length < 4) {
-      return null;
-    }
-
-    const [store = '', region = 'GLOBAL', amount = '0', sell = '0', quantity = '1', rating = '5', image = ''] = parts;
-    return { store, region, amount, sell, quantity, rating, image };
-  };
-
-  const giftCardFieldAliases: Record<string, keyof ParsedGiftCardLine> = {
-    store: 'store',
-    brand: 'store',
-    shop: 'store',
-    region: 'region',
-    country: 'region',
-    amount: 'amount',
-    denomination: 'amount',
-    value: 'amount',
-    sell: 'sell',
-    selling: 'sell',
-    price: 'sell',
-    quantity: 'quantity',
-    qty: 'quantity',
-    rating: 'rating',
-    stars: 'rating',
-    image: 'image',
-    imageurl: 'image',
-  };
-
-  const parseGiftCardLabelBlocks = (input: string): ParsedGiftCardLine[] => {
-    const blocks = input
-      .split(/\n\s*\n/)
-      .map((block) => block.trim())
-      .filter(Boolean);
-
-    return blocks
-      .map((block) => {
-        const parsed: ParsedGiftCardLine = {
-          store: '',
-          region: 'GLOBAL',
-          amount: '0',
-          sell: '0',
-          quantity: '1',
-          rating: '5',
-          image: '',
-        };
-
-        block
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .forEach((line) => {
-            const [rawLabel, ...rawValue] = line.split(/[:=-]/);
-            if (!rawLabel || rawValue.length === 0) return;
-            const alias = rawLabel.toLowerCase().replace(/\s+/g, '');
-            const key = giftCardFieldAliases[alias];
-            if (!key) return;
-            parsed[key] = rawValue.join(':').trim();
-          });
-
-        return parsed.store ? parsed : null;
-      })
-      .filter((item): item is ParsedGiftCardLine => Boolean(item));
-  };
-
-  const parseGiftCardLines = (input: string) => {
-    const rows = input
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    const parsedRows = rows
-      .map(parseGiftCardDelimitedLine)
-      .filter((row): row is ParsedGiftCardLine => Boolean(row));
-
-    const labelRows = parsedRows.length > 0 ? [] : parseGiftCardLabelBlocks(input);
-    const normalizedRows = parsedRows.length > 0 ? parsedRows : labelRows;
-
-    return normalizedRows.flatMap((row) => {
-      const store = row.store.trim();
-      const region = row.region.trim() || 'GLOBAL';
-      const denomination = Number(row.amount);
-      const sellPrice = Number(row.sell);
-      const quantity = Math.max(1, Number.parseInt(row.quantity, 10) || 1);
-      const rating = Number(row.rating);
-      const safeRating = Number.isFinite(rating) && rating > 0 && rating <= 5 ? rating : 5;
-      const amountLabel = Number.isInteger(denomination) ? `${denomination}` : denomination.toFixed(2);
-
-      if (!store || !Number.isFinite(denomination) || denomination <= 0 || !Number.isFinite(sellPrice) || sellPrice <= 0) {
-        return [];
-      }
-
-      return Array.from({ length: quantity }, (_, index) => ({
-        title: `$${amountLabel} ${store} Card`,
-        description: `${store} Giftcards [${region}] listing. Unit ${index + 1}/${quantity}. Instant delivery with replacement support.`,
-        short_description: `option:$${amountLabel} ${store} Card|rating:${safeRating.toFixed(1)}|denomination:${amountLabel}`,
-        price: sellPrice,
-        category: 'assets' as const,
-        product_type: 'giftcards' as const,
-        image_url: row.image.trim() || null,
-        file_url: null,
-        is_active: true,
-        bin: null,
-        country: region,
-        brand: store,
-      }));
-    });
-  };
-
-  const handleGiftCardBulkCreate = async () => {
-    if (!giftCardBulkText.trim()) {
-      toast.error('Paste or upload gift card lines first.');
-      return;
-    }
-
-    const parsedGiftCardProducts = parseGiftCardLines(giftCardBulkText);
-    if (parsedGiftCardProducts.length === 0) {
-      toast.error('No valid gift card listings found. Use CSV/pipe lines or label blocks (Store: ..., Amount: ..., Sell: ...).');
-      return;
-    }
-
-    const { error } = await supabase.from('products').insert(parsedGiftCardProducts);
-    if (error) {
-      toast.error('Failed to import gift card listings');
-      return;
-    }
-
-    toast.success(`Imported ${parsedGiftCardProducts.length} gift card listings`);
-    setGiftCardBulkText('');
-    fetchProducts();
-  };
-
   const getCategoryClass = (category: string) => {
     switch (category) {
       case 'software': return 'bg-blue-500/20 text-blue-400';
@@ -565,24 +420,6 @@ Hurry! Limited quantities available.`,
                 />
                 <Button type="button" variant="outline" onClick={handleBulkCreate}>
                   Import Lines as Listings
-                </Button>
-              </div>
-            )}
-
-            {formData.product_type === 'giftcards' && (
-              <div className="space-y-2 border border-primary/20 rounded-md p-3">
-                <Label className="font-mono text-xs text-muted-foreground">GIFT CARD BULK LISTING IMPORT</Label>
-                <Textarea
-                  className="crt-input min-h-[140px]"
-                  value={giftCardBulkText}
-                  onChange={(e) => setGiftCardBulkText(e.target.value)}
-                  placeholder={"store,region,amount,sell,quantity,rating,image\nAmazon,USA,25,22,10,5,https://...\nAmazon|USA|50|45|6|4.9|https://...\n\nOR\nStore: eBay\nRegion: USA\nAmount: 100\nSell: 88\nQuantity: 4\nRating: 4.8"}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Creates multiple gift card SKUs with metadata for amount, rating, region, and sell price so they render as grouped listing options on the gift card page.
-                </p>
-                <Button type="button" variant="outline" onClick={handleGiftCardBulkCreate}>
-                  Import Gift Card Listing Batch
                 </Button>
               </div>
             )}
