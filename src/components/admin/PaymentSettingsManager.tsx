@@ -17,6 +17,13 @@ const PAYMENT_ICONS: Record<string, string> = {
   stripe: '💳',
   authorize_net: '🏦',
   cashapp: '💵',
+  chime: '🏛️',
+  crypto: '₿',
+  venmo: '💜',
+  paypal: '🅿️',
+  zelle: '⚡',
+  applepay: '🍎',
+  googlepay: '🟢',
   telegram_stars: '⭐',
   wallet: '👛',
 };

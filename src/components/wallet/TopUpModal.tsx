@@ -29,8 +29,26 @@ const PAYMENT_ICONS: Record<string, string> = {
   stripe: '💳',
   authorize_net: '🏦',
   cashapp: '💵',
+  chime: '🏛️',
+  crypto: '₿',
+  venmo: '💜',
+  paypal: '🅿️',
+  zelle: '⚡',
+  applepay: '🍎',
+  googlepay: '🟢',
   telegram_stars: '⭐',
 };
+
+const MANUAL_REVIEW_METHODS = new Set([
+  'cashapp',
+  'chime',
+  'crypto',
+  'venmo',
+  'paypal',
+  'zelle',
+  'applepay',
+  'googlepay',
+]);
 
 export default function TopUpModal({ open, onOpenChange, onSuccess }: TopUpModalProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -89,18 +107,6 @@ export default function TopUpModal({ open, onOpenChange, onSuccess }: TopUpModal
           toast.success('Redirecting to Stripe checkout...');
           onOpenChange(false);
         }
-      } else if (selectedMethod === 'cashapp') {
-        // Call Cash App payment edge function
-        const { data, error } = await supabase.functions.invoke('create-cashapp-payment', {
-          body: { amount: numAmount },
-        });
-
-        if (error) throw error;
-        if (data?.url) {
-          window.open(data.url, '_blank');
-          toast.success('Redirecting to Cash App...');
-          onOpenChange(false);
-        }
       } else if (selectedMethod === 'telegram_stars') {
         // Call Telegram Stars edge function
         const { data, error } = await supabase.functions.invoke('create-telegram-stars-link', {
@@ -115,6 +121,52 @@ export default function TopUpModal({ open, onOpenChange, onSuccess }: TopUpModal
         }
       } else if (selectedMethod === 'authorize_net') {
         toast.info('Authorize.net integration coming soon');
+      } else if (MANUAL_REVIEW_METHODS.has(selectedMethod)) {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          throw new Error('You must be logged in to submit a deposit request');
+        }
+
+        const requestSubject = `Wallet top-up request · ${selectedMethod}`;
+        const requestMessage = [
+          'New manual top-up request',
+          `Payment method: ${selectedMethod}`,
+          `Amount: $${numAmount.toFixed(2)}`,
+          'Please share the payment destination and approve after payment proof is sent.',
+        ].join('\n');
+
+        const { data: chatData, error: chatError } = await supabase
+          .from('support_chats')
+          .insert({
+            user_id: user.id,
+            status: 'open',
+            subject: requestSubject,
+          })
+          .select('id')
+          .single();
+
+        if (chatError || !chatData?.id) {
+          throw chatError || new Error('Failed to create deposit request');
+        }
+
+        const { error: messageError } = await supabase.from('support_messages').insert({
+          chat_id: chatData.id,
+          sender_id: user.id,
+          sender_type: 'user',
+          message: requestMessage,
+          message_type: 'text',
+        });
+
+        if (messageError) {
+          throw messageError;
+        }
+
+        toast.success('Deposit request submitted. Admin support will provide next steps.');
+        onOpenChange(false);
       }
     } catch (error: any) {
       console.error('Payment error:', error);
