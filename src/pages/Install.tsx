@@ -54,7 +54,7 @@ export default function Install() {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('push_subscriptions')
         .select('id')
         .eq('user_id', userData.user.id)
@@ -163,7 +163,7 @@ export default function Install() {
         return;
       }
 
-      const { error } = await supabase.from('push_subscriptions').upsert(
+      const { error } = await (supabase as any).from('push_subscriptions').upsert(
         {
           user_id: userData.user.id,
           endpoint: subscriptionJson.endpoint,
