@@ -14,7 +14,7 @@ interface Product {
   short_description: string | null;
   price: number;
   category: string;
-  product_type: 'stock' | 'logz' | 'accounts';
+  product_type: string;
   image_url: string | null;
   created_at: string;
 }
