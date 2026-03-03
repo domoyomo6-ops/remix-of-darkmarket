@@ -2,28 +2,38 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import webpush from "web-push";
 
+// ── CORS ──────────────────────────────────────────────────────
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
+// ── Env ───────────────────────────────────────────────────────
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = Deno.env.get("SITE_URL") || "https://example.com";
-
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT");
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
 
-if (VAPID_SUBJECT && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+const vapidReady = Boolean(VAPID_SUBJECT && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+if (vapidReady) {
+  webpush.setVapidDetails(VAPID_SUBJECT!, VAPID_PUBLIC_KEY!, VAPID_PRIVATE_KEY!);
 }
 
-type BroadcastRequest = {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// ── Types ─────────────────────────────────────────────────────
+type BroadcastType =
+  | "announcement" | "drop" | "product" | "custom"
+  | "restock" | "update" | "promo" | "info";
+
+interface BroadcastRequest {
   title: string;
   message: string;
   link?: string;
-  type: "announcement" | "drop" | "product" | "custom" | "restock" | "update" | "promo" | "info";
+  type: BroadcastType;
   sendPush?: boolean;
   forceTelegram?: boolean;
   telegramBotToken?: string;
@@ -32,216 +42,164 @@ type BroadcastRequest = {
   ctaUrl?: string;
   secondaryCtaLabel?: string;
   secondaryCtaUrl?: string;
-};
+}
 
-type SiteSettings = {
-  telegram_admin_enabled: boolean;
-  telegram_customer_enabled: boolean;
-  telegram_bot_token: string | null;
-  telegram_admin_chat_id: string | null;
-};
+// ── Helpers ───────────────────────────────────────────────────
+const esc = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+   .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-
-const typeLabelMap: Record<BroadcastRequest["type"], { emoji: string; label: string }> = {
+const TYPE_META: Record<BroadcastType, { emoji: string; label: string }> = {
   announcement: { emoji: "📣", label: "Announcement" },
-  drop: { emoji: "🔥", label: "Drop" },
-  product: { emoji: "🛍️", label: "Product" },
-  custom: { emoji: "✨", label: "Update" },
-  restock: { emoji: "♻️", label: "Restock" },
-  update: { emoji: "🆕", label: "Update" },
-  promo: { emoji: "🎁", label: "Promo" },
-  info: { emoji: "ℹ️", label: "Info" },
+  drop:         { emoji: "🔥", label: "Drop" },
+  product:      { emoji: "🛍️", label: "Product" },
+  custom:       { emoji: "✨", label: "Update" },
+  restock:      { emoji: "♻️", label: "Restock" },
+  update:       { emoji: "🆕", label: "Update" },
+  promo:        { emoji: "🎁", label: "Promo" },
+  info:         { emoji: "ℹ️", label: "Info" },
 };
 
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+
+// ── Auth helper ───────────────────────────────────────────────
+async function authenticateAdmin(req: Request) {
+  const auth = req.headers.get("Authorization");
+  if (!auth?.startsWith("Bearer ")) return null;
+
+  const { data: { user }, error } = await supabase.auth.getUser(
+    auth.replace("Bearer ", "").trim(),
+  );
+  if (error || !user) return null;
+
+  const { data: isAdmin } = await supabase.rpc("has_role", {
+    _user_id: user.id,
+    _role: "admin",
+  });
+  return isAdmin ? user : null;
+}
+
+// ── Telegram sender ───────────────────────────────────────────
+async function sendTelegram(
+  token: string,
+  chatId: string,
+  body: BroadcastRequest,
+) {
+  const meta = TYPE_META[body.type] ?? TYPE_META.custom;
+  const fullLink = body.ctaUrl || (body.link ? `${SITE_URL}${body.link}` : undefined);
+
+  const lines = [
+    `${meta.emoji} <b>${esc(body.title.trim())}</b>`,
+    `<blockquote>${esc(body.message.trim())}</blockquote>`,
+    `<b>Category:</b> ${esc(meta.label.toUpperCase())}`,
+    `<b>Posted:</b> ${esc(new Date().toUTCString())}`,
+  ];
+
+  if (fullLink && !body.ctaLabel) {
+    lines.push(`<b>Open:</b> ${esc(fullLink)}`);
+  }
+
+  const keyboard: Array<Array<{ text: string; url: string }>> = [];
+  if (body.ctaLabel && body.ctaUrl) {
+    keyboard.push([{ text: body.ctaLabel, url: body.ctaUrl }]);
+  }
+  if (body.secondaryCtaLabel && body.secondaryCtaUrl) {
+    keyboard.push([{ text: body.secondaryCtaLabel, url: body.secondaryCtaUrl }]);
+  }
+
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: lines.join("\n\n"),
+      parse_mode: "HTML",
+      disable_web_page_preview: false,
+      ...(keyboard.length > 0
+        ? { reply_markup: { inline_keyboard: keyboard } }
+        : {}),
+    }),
+  });
+
+  const data = await res.json();
+  return { sent: res.ok, error: res.ok ? undefined : data };
+}
+
+// ── Push sender ───────────────────────────────────────────────
+async function sendPushNotifications(body: BroadcastRequest) {
+  if (!vapidReady) return 0;
+
+  const { data: subs, error } = await supabase
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth");
+  if (error) throw error;
+
+  let sent = 0;
+  for (const sub of subs ?? []) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        JSON.stringify({
+          title: body.title,
+          body: body.message,
+          url: body.link ?? "/",
+          tag: `site-${body.type}`,
+        }),
+      );
+      sent++;
+    } catch (e) {
+      const code = (e as { statusCode?: number }).statusCode;
+      if (code === 404 || code === 410) {
+        await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+      }
+      console.error("Push failed", e);
+    }
+  }
+  return sent;
+}
+
+// ── Main handler ──────────────────────────────────────────────
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    const admin = await authenticateAdmin(req);
+    if (!admin) return json({ error: "Unauthorized" }, 401);
+
+    const body: BroadcastRequest = await req.json();
+    if (!body.title || !body.message || !body.type) {
+      return json({ error: "title, message, and type are required" }, 400);
     }
 
-    const jwt = authHeader.replace("Bearer ", "").trim();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(jwt);
-
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid authorization token" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
-      _user_id: user.id,
-      _role: "admin",
-    });
-
-    if (roleError) {
-      throw roleError;
-    }
-
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    const {
-      title,
-      message,
-      link,
-      type,
-      sendPush = true,
-      forceTelegram = false,
-      telegramBotToken,
-      telegramChatId,
-      ctaLabel,
-      ctaUrl,
-      secondaryCtaLabel,
-      secondaryCtaUrl,
-    }: BroadcastRequest = await req.json();
-
-    if (!title || !message || !type) {
-      return new Response(JSON.stringify({ error: "title, message and type are required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    const { data: settings, error: settingsError } = await supabase
+    // Resolve Telegram credentials
+    const { data: settings } = await supabase
       .from("site_settings")
       .select("telegram_admin_enabled, telegram_customer_enabled, telegram_bot_token, telegram_admin_chat_id")
       .single();
 
-    if (settingsError) {
-      throw settingsError;
+    const tgEnabled = settings?.telegram_admin_enabled && settings?.telegram_customer_enabled;
+    const tgToken = body.telegramBotToken?.trim() || settings?.telegram_bot_token;
+    const tgChatId = body.telegramChatId?.trim() || settings?.telegram_admin_chat_id;
+    const shouldSendTg = body.forceTelegram || tgEnabled;
+
+    // Send Telegram
+    let telegramResult = { sent: false as boolean, error: undefined as unknown };
+    if (shouldSendTg && tgToken && tgChatId) {
+      telegramResult = await sendTelegram(tgToken, tgChatId, body);
     }
 
-    const telegramSettings = settings as SiteSettings | null;
-    const telegramEnabled = telegramSettings?.telegram_admin_enabled && telegramSettings?.telegram_customer_enabled;
-    const telegramToken = telegramBotToken?.trim() || telegramSettings?.telegram_bot_token;
-    const resolvedTelegramChatId = telegramChatId?.trim() || telegramSettings?.telegram_admin_chat_id;
-    const shouldSendTelegram = forceTelegram || telegramEnabled;
+    // Send push
+    const pushSent = body.sendPush !== false ? await sendPushNotifications(body) : 0;
 
-    let telegramResult: { sent: boolean; error?: unknown } = { sent: false };
-
-    if (shouldSendTelegram && telegramToken && resolvedTelegramChatId) {
-      const typeMeta = typeLabelMap[type] ?? typeLabelMap.custom;
-      const fullLink = ctaUrl || (link ? `${SITE_URL}${link}` : undefined);
-      const safeTitle = escapeHtml(title.trim());
-      const safeMessage = escapeHtml(message.trim());
-      const generatedAt = new Date().toUTCString();
-      const lines = [
-        `${typeMeta.emoji} <b>${safeTitle}</b>`,
-        `<blockquote>${safeMessage}</blockquote>`,
-        `<b>Category:</b> ${escapeHtml(typeMeta.label.toUpperCase())}`,
-        `<b>Posted:</b> ${escapeHtml(generatedAt)}`,
-      ];
-
-      if (fullLink && !ctaLabel) {
-        lines.push(`<b>Open:</b> ${escapeHtml(fullLink)}`);
-      }
-
-      const inlineKeyboard: Array<Array<{ text: string; url: string }>> = [];
-      if (ctaLabel && ctaUrl) {
-        inlineKeyboard.push([{ text: ctaLabel, url: ctaUrl }]);
-      }
-      if (secondaryCtaLabel && secondaryCtaUrl) {
-        inlineKeyboard.push([{ text: secondaryCtaLabel, url: secondaryCtaUrl }]);
-      }
-
-      const telegramResponse = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: resolvedTelegramChatId,
-          text: lines.join("\n\n"),
-          parse_mode: "HTML",
-          disable_web_page_preview: false,
-          ...(inlineKeyboard.length > 0 ? { reply_markup: { inline_keyboard: inlineKeyboard } } : {}),
-        }),
-      });
-
-      const telegramJson = await telegramResponse.json();
-      telegramResult = {
-        sent: telegramResponse.ok,
-        error: telegramResponse.ok ? undefined : telegramJson,
-      };
-    }
-
-    let pushSent = 0;
-    if (sendPush && VAPID_SUBJECT && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-      const { data: subscriptions, error } = await supabase
-        .from("push_subscriptions")
-        .select("id, endpoint, p256dh, auth");
-
-      if (error) {
-        throw error;
-      }
-
-      for (const subscription of subscriptions ?? []) {
-        try {
-          await webpush.sendNotification(
-            {
-              endpoint: subscription.endpoint,
-              keys: {
-                p256dh: subscription.p256dh,
-                auth: subscription.auth,
-              },
-            },
-            JSON.stringify({
-              title,
-              body: message,
-              url: link ?? "/",
-              tag: `site-${type}`,
-            }),
-          );
-          pushSent += 1;
-        } catch (pushError) {
-          const statusCode = (pushError as { statusCode?: number }).statusCode;
-          if (statusCode === 404 || statusCode === 410) {
-            await supabase.from("push_subscriptions").delete().eq("id", subscription.id);
-          }
-          console.error("Failed to send push notification", pushError);
-        }
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        telegram: telegramResult,
-        pushSent,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      },
-    );
-  } catch (error) {
-    console.error("broadcast-site-update error", error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return json({ ok: true, telegram: telegramResult, pushSent });
+  } catch (e) {
+    console.error("broadcast-site-update error", e);
+    return json({ error: (e as Error).message }, 500);
   }
 });
