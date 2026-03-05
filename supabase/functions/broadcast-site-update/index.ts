@@ -1,28 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import webpush from "web-push";
 
 // ── CORS ──────────────────────────────────────────────────────
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // ── Env ───────────────────────────────────────────────────────
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = Deno.env.get("SITE_URL") || "https://example.com";
-const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT");
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
 
-const vapidReady = Boolean(VAPID_SUBJECT && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
-if (vapidReady) {
-  webpush.setVapidDetails(VAPID_SUBJECT!, VAPID_PUBLIC_KEY!, VAPID_PRIVATE_KEY!);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // ── Types ─────────────────────────────────────────────────────
 type BroadcastType =
@@ -71,12 +62,12 @@ async function authenticateAdmin(req: Request) {
   const auth = req.headers.get("Authorization");
   if (!auth?.startsWith("Bearer ")) return null;
 
-  const { data: { user }, error } = await supabase.auth.getUser(
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(
     auth.replace("Bearer ", "").trim(),
   );
   if (error || !user) return null;
 
-  const { data: isAdmin } = await supabase.rpc("has_role", {
+  const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
     _user_id: user.id,
     _role: "admin",
   });
@@ -129,39 +120,6 @@ async function sendTelegram(
   return { sent: res.ok, error: res.ok ? undefined : data };
 }
 
-// ── Push sender ───────────────────────────────────────────────
-async function sendPushNotifications(body: BroadcastRequest) {
-  if (!vapidReady) return 0;
-
-  const { data: subs, error } = await supabase
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth");
-  if (error) throw error;
-
-  let sent = 0;
-  for (const sub of subs ?? []) {
-    try {
-      await webpush.sendNotification(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        JSON.stringify({
-          title: body.title,
-          body: body.message,
-          url: body.link ?? "/",
-          tag: `site-${body.type}`,
-        }),
-      );
-      sent++;
-    } catch (e) {
-      const code = (e as { statusCode?: number }).statusCode;
-      if (code === 404 || code === 410) {
-        await supabase.from("push_subscriptions").delete().eq("id", sub.id);
-      }
-      console.error("Push failed", e);
-    }
-  }
-  return sent;
-}
-
 // ── Main handler ──────────────────────────────────────────────
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -178,7 +136,7 @@ serve(async (req: Request) => {
     }
 
     // Resolve Telegram credentials
-    const { data: settings } = await supabase
+    const { data: settings } = await supabaseAdmin
       .from("site_settings")
       .select("telegram_admin_enabled, telegram_customer_enabled, telegram_bot_token, telegram_admin_chat_id")
       .single();
@@ -194,10 +152,7 @@ serve(async (req: Request) => {
       telegramResult = await sendTelegram(tgToken, tgChatId, body);
     }
 
-    // Send push
-    const pushSent = body.sendPush !== false ? await sendPushNotifications(body) : 0;
-
-    return json({ ok: true, telegram: telegramResult, pushSent });
+    return json({ ok: true, telegram: telegramResult });
   } catch (e) {
     console.error("broadcast-site-update error", e);
     return json({ error: (e as Error).message }, 500);
