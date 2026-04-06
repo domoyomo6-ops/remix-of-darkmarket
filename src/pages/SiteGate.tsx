@@ -203,7 +203,7 @@ const SiteGate = () => {
     });
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 font-mono overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center p-2 sm:p-4 font-mono overflow-hidden">
       {/* ORIGINAL DARK BACKGROUND */}
       <div 
         className="fixed inset-0 -z-30"
