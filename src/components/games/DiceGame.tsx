@@ -31,7 +31,7 @@ export default function DiceGame({ session, onEnd }: DiceGameProps) {
   const [animatingDice, setAnimatingDice] = useState<number>(1);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (rolling) {
       interval = setInterval(() => {
         setAnimatingDice(Math.floor(Math.random() * 6) + 1);

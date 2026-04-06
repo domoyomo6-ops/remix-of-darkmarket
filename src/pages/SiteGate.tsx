@@ -58,7 +58,7 @@ const SiteGate = () => {
 
   // Secret click pattern: Click the "5" in DRKMRT 5 times
   const [secretClicks, setSecretClicks] = useState(0);
-  const secretTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const secretTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSecretClick = () => {
     setSecretClicks(prev => {
