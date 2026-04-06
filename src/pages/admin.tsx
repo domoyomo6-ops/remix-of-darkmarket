@@ -123,7 +123,7 @@ export default function Admin() {
 
           {/* Tabs for different sections */}
           <Tabs defaultValue="products" className="space-y-6">
-            <TabsList className="bg-background/50 border border-primary/20 p-1 w-full overflow-x-auto flex-nowrap">
+            <TabsList className="bg-background/50 border border-primary/20 p-1 w-full overflow-x-auto flex flex-nowrap no-scrollbar">
               <TabsTrigger 
                 value="products" 
                 className="flex-1 sm:flex-none font-mono text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"

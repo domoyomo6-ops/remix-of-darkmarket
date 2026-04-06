@@ -96,7 +96,7 @@ export default function Homepage() {
         <div className="container mx-auto px-4 py-8 relative z-20">
           
           {/* HERO SECTION - Terminal Style */}
-          <TerminalWindow title="hellstar_network" className="mb-8">
+          <TerminalWindow title="drkmrt_network" className="mb-8">
             <div className="p-6 md:p-10">
               {/* System status bar */}
               <div className="flex flex-wrap items-center gap-4 mb-6 text-xs font-mono">

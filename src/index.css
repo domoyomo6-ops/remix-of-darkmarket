@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ULTRA HACKER TERMINAL - 3D Immersive Experience */
 
 @layer base {
@@ -894,9 +904,63 @@ body {
 .animate-scan {
   animation: scan 1s ease-in-out infinite;
 }
- 
- /* Parallax smooth transitions */
- .parallax-layer {
-   will-change: transform;
-   backface-visibility: hidden;
- }
+
+/* Parallax smooth transitions */
+.parallax-layer {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Mobile-first improvements */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Safe area insets for notched phones */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Better touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent horizontal overflow */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Scrollable tabs on mobile */
+  [role="tablist"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Touch-friendly scrollbars */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
