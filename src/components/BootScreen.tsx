@@ -6,7 +6,7 @@ interface BootScreenProps {
 }
 
 const bootSequence = [
-  { text: 'HELL5TAR SYSTEMS v2.0.47', delay: 0, type: 'header' },
+  { text: 'DRKMRT SYSTEMS v2.0.47', delay: 0, type: 'header' },
   { text: '================================', delay: 100, type: 'divider' },
   { text: '', delay: 200, type: 'blank' },
   { text: '[BOOT] Initializing kernel...', delay: 300, type: 'info' },
@@ -112,7 +112,7 @@ export default function BootScreen({ onComplete }: BootScreenProps) {
             </div>
             <div className="flex-1 text-center">
               <span className="text-xs text-muted-foreground font-mono">
-                hell5tar@boot-sequence ~ /system/init
+                drkmrt@boot-sequence ~ /system/init
               </span>
             </div>
             <Terminal className="w-4 h-4 text-primary/60" />
@@ -172,7 +172,7 @@ export default function BootScreen({ onComplete }: BootScreenProps) {
 
         {/* Footer text */}
         <p className="text-center text-xs text-muted-foreground font-mono mt-4 terminal-glow">
-          HELL5TAR SECURE SYSTEMS © 2024
+          DRKMRT SECURE SYSTEMS © 2024
         </p>
       </div>
     </div>

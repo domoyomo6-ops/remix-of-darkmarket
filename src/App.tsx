@@ -140,7 +140,7 @@ function AppContent() {
   const [hasBooted, setHasBooted] = useState(false);
   useEffect(() => {
     const bootEnabled = localStorage.getItem('show_boot_screen') === 'true';
-    const booted = sessionStorage.getItem('hell5tar_booted');
+    const booted = sessionStorage.getItem('drkmrt_booted');
 
     if (!bootEnabled || booted) {
       setShowBoot(false);
@@ -157,7 +157,7 @@ function AppContent() {
   const handleBootComplete = () => {
     setShowBoot(false);
     setHasBooted(true);
-    sessionStorage.setItem('hell5tar_booted', 'true');
+    sessionStorage.setItem('drkmrt_booted', 'true');
   };
   return <>
       {showBoot && !hasBooted && <BootScreen onComplete={handleBootComplete} />}

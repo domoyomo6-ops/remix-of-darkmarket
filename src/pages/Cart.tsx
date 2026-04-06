@@ -23,12 +23,12 @@ interface CartProduct {
 // Cart stored in localStorage
 function getCart(): string[] {
   try {
-    return JSON.parse(localStorage.getItem('hell5tar_cart') || '[]');
+    return JSON.parse(localStorage.getItem('drkmrt_cart') || '[]');
   } catch { return []; }
 }
 
 function setCartStorage(ids: string[]) {
-  localStorage.setItem('hell5tar_cart', JSON.stringify(ids));
+  localStorage.setItem('drkmrt_cart', JSON.stringify(ids));
   window.dispatchEvent(new Event('cart-update'));
 }
 
@@ -161,7 +161,7 @@ export default function Cart() {
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 border border-primary/20 mb-4">
               <Terminal className="w-4 h-4 text-primary" />
-              <span className="text-xs font-mono text-primary">root@hell5tar:~/cart$</span>
+              <span className="text-xs font-mono text-primary">root@drkmrt:~/cart$</span>
               <span className="w-2 h-4 bg-primary animate-pulse" />
             </div>
             <h1 className="text-3xl sm:text-4xl font-mono font-bold mb-2">

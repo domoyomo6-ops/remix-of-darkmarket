@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #888; font-size: 12px;">Your download is now available in your orders page.</p>
             </div>
           </div>
-          <p style="color: #444; font-size: 10px; margin-top: 20px; text-align: center;">HELL5TAR SYSTEMS</p>
+          <p style="color: #444; font-size: 10px; margin-top: 20px; text-align: center;">DRKMRT SYSTEMS</p>
         </div>
       `;
     } else {
@@ -59,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #888; font-size: 12px;">Your funds are now available for purchases.</p>
             </div>
           </div>
-          <p style="color: #444; font-size: 10px; margin-top: 20px; text-align: center;">HELL5TAR SYSTEMS</p>
+          <p style="color: #444; font-size: 10px; margin-top: 20px; text-align: center;">DRKMRT SYSTEMS</p>
         </div>
       `;
     }
@@ -71,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "HELL5TAR <onboarding@resend.dev>",
+        from: "DRKMRT <onboarding@resend.dev>",
         to: [email],
         subject,
         html,

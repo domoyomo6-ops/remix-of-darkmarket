@@ -122,7 +122,7 @@ export default function Homepage() {
               <div className={`text-center mb-8 transition-all duration-700 ${bootComplete ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4">
                   <Text3D className="text-primary">
-                    HELL5TAR://
+                    DRKMRT://
                   </Text3D>
                 </h1>
                 <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto mb-6">

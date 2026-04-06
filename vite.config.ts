@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
       filename: "sw.ts",
       includeAssets: ["favicon.ico", "robots.txt"],
       manifest: {
-        name: "HELL5TAR Network",
-        short_name: "HELL5TAR",
+        name: "DRKMRT Network",
+        short_name: "DRKMRT",
         description: "Premium digital assets with secure transactions and instant delivery",
         theme_color: "#22c55e",
         background_color: "#000000",

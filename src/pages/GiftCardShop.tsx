@@ -158,7 +158,7 @@ export default function GiftCardShop() {
     : listings.filter((listing) => listing.store === storeFilter);
 
   const onAddToCart = (option: ListingOption) => {
-    const inCart = new Set<string>(JSON.parse(localStorage.getItem('hell5tar_cart') || '[]'));
+    const inCart = new Set<string>(JSON.parse(localStorage.getItem('drkmrt_cart') || '[]'));
     const availableId = option.ids.find((id) => !inCart.has(id));
 
     if (!availableId) {

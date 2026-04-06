@@ -22,7 +22,7 @@ export default function Header() {
   useEffect(() => {
     const updateCount = () => {
       try {
-        const cart = JSON.parse(localStorage.getItem('hell5tar_cart') || '[]');
+        const cart = JSON.parse(localStorage.getItem('drkmrt_cart') || '[]');
         setCartCount(cart.length);
       } catch { setCartCount(0); }
     };
@@ -146,7 +146,7 @@ export default function Header() {
             <Terminal className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           </div>
           <span className="font-mono font-bold text-sm sm:text-lg text-primary tracking-wider animate-logo-glow">
-            HELL5TAR://
+            DRKMRT://
           </span>
         </Link>
 

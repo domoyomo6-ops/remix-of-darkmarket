@@ -36,13 +36,13 @@ const getColor = (_brand: string | null, i: number) =>
   fallbackColors[i % fallbackColors.length];
 
 const addToCart = (product: Product) => {
-  const cart = JSON.parse(localStorage.getItem('hell5tar_cart') || '[]');
+  const cart = JSON.parse(localStorage.getItem('drkmrt_cart') || '[]');
   if (cart.find((item: any) => item.id === product.id)) {
     sonnerToast.info('Already in cart');
     return;
   }
   cart.push({ id: product.id, title: product.title, price: product.price, brand: product.brand, type: 'accounts' });
-  localStorage.setItem('hell5tar_cart', JSON.stringify(cart));
+  localStorage.setItem('drkmrt_cart', JSON.stringify(cart));
   window.dispatchEvent(new Event('cart-update'));
   sonnerToast.success(`${product.brand || product.title} added to cart`);
 };

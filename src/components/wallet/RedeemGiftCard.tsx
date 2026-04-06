@@ -102,7 +102,7 @@ export default function RedeemGiftCard({ onSuccess }: RedeemGiftCardProps) {
                 <Input
                   value={code}
                   onChange={(e) => setCode(formatCode(e.target.value))}
-                  placeholder="HELL5TAR-XXXXXXXX"
+                  placeholder="DRKMRT-XXXXXXXX"
                   className="crt-input font-mono text-center text-lg tracking-wider"
                   maxLength={25}
                   disabled={loading}

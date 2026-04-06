@@ -88,7 +88,7 @@ export default function Admin() {
               <div className="flex items-center gap-2 mb-2">
                 <Terminal className="w-5 h-5 text-primary" />
                 <span className="text-xs text-muted-foreground font-mono">
-                  hell5tar@admin ~ {format(new Date(), 'HH:mm:ss')}
+                  drkmrt@admin ~ {format(new Date(), 'HH:mm:ss')}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-mono font-bold text-primary terminal-glow float-3d">

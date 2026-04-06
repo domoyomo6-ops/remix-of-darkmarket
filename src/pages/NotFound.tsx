@@ -27,7 +27,7 @@ const NotFound = () => {
           <div className="flex items-center gap-2 mb-8 pb-4 border-b border-primary/20 justify-center">
             <Terminal className="w-5 h-5 text-destructive" />
             <span className="text-xs text-muted-foreground font-mono">
-              hell5tar@error-handler ~
+              drkmrt@error-handler ~
             </span>
           </div>
 
