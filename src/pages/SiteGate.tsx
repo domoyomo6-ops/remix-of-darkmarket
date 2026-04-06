@@ -56,7 +56,7 @@ const SiteGate = () => {
     header: "rgba(118,255,180,0.12)",
   };
 
-  // Secret click pattern: Click the "5" in HELL5TAR 5 times
+  // Secret click pattern: Click the "5" in DRKMRT 5 times
   const [secretClicks, setSecretClicks] = useState(0);
   const secretTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -343,7 +343,7 @@ const SiteGate = () => {
                 style={{ background: `rgba(${COLORS.main},0.05)`, borderColor: `rgba(${COLORS.main},0.15)` }}
               >
                 <span className="text-xs" style={{ color: `rgba(${COLORS.main},0.8)`, textShadow: `0 0 8px rgba(${COLORS.main},0.6)` }}>
-                  hell5tar@game-room-site-gate ~{" "}
+                  drkmrt@game-room-site-gate ~{" "}
                   <span className={`phosphor-trail ${phosphorPulse ? "phosphor-pulse" : ""}`}>
                     {formatTime(currentTime)}
                   </span>
@@ -357,7 +357,7 @@ const SiteGate = () => {
                   <pre className="text-[9px] sm:text-[11px] leading-tight whitespace-pre" style={{ color: `rgba(${COLORS.main},0.95)`, textShadow: `0 0 1px rgba(${COLORS.main},1),0 0 2px rgba(${COLORS.main},0.8)` }}>
                     {asciiLogo}
                   </pre>
-                  {/* Hidden clickable area over the "5" and star area in HELL5TAR */}
+                  {/* Hidden clickable area over the "5" and star area in DRKMRT */}
                   <button
                     onClick={handleSecretClick}
                     className="absolute opacity-0 cursor-default"
@@ -421,7 +421,7 @@ const SiteGate = () => {
                         value={email} 
                         onChange={(e) => setEmail(e.target.value)} 
                         className="crt-input w-full" 
-                        placeholder="user@hell5tar.net" 
+                        placeholder="user@drkmrt.net" 
                         required 
                       />
                     </div>
@@ -485,7 +485,7 @@ const SiteGate = () => {
                         value={signUpEmail} 
                         onChange={(e) => setSignUpEmail(e.target.value)} 
                         className="crt-input w-full" 
-                        placeholder="user@hell5tar.net"
+                        placeholder="user@drkmrt.net"
                         required 
                       />
                       {signUpErrors.email && (

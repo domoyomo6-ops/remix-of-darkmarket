@@ -164,7 +164,7 @@ export default function Announcements({ onContinue }: AnnouncementsProps) {
             size="lg"
             className="w-full sm:w-auto px-8 py-6 text-base sm:text-lg font-mono bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all"
           >
-            Continue to HELL5TAR
+            Continue to DRKMRT
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
           {!allAcknowledged && announcements.length > 0 && (

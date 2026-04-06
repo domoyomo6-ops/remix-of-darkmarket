@@ -128,7 +128,7 @@ export default function Desktop() {
             ${showStartMenu ? 'bg-primary/20' : 'hover:bg-white/5'}`}
         >
           <Terminal className="w-5 h-5 text-primary" />
-          <span className="text-sm font-mono text-primary hidden sm:inline">HELL5TAR</span>
+          <span className="text-sm font-mono text-primary hidden sm:inline">DRKMRT</span>
         </button>
 
         <div className="flex items-center gap-1 text-primary/70">

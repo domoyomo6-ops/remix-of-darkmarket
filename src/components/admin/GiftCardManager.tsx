@@ -142,7 +142,7 @@ export default function GiftCardManager() {
     const bytes = new Uint8Array(5);
     crypto.getRandomValues(bytes);
     const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-    return normalizeCode(`HELL5TAR-${hex}`);
+    return normalizeCode(`DRKMRT-${hex}`);
   };
 
   // ── Create gift card ────────────────────────────────────────

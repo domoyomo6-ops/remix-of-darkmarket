@@ -211,7 +211,7 @@ export default function Install() {
                 <CheckCircle className="w-12 h-12 text-primary mx-auto mb-4" />
                 <p className="text-primary font-mono mb-2">APP_INSTALLED</p>
                 <p className="text-muted-foreground font-mono text-sm">
-                  You're already using the installed version of HELL5TAR.
+                  You're already using the installed version of DRKMRT.
                 </p>
               </div>
             ) : isIOS ? (
@@ -233,14 +233,14 @@ export default function Install() {
                 </ol>
                 <div className="mt-6 p-3 rounded bg-primary/10 border border-primary/20">
                   <p className="text-xs text-primary font-mono">
-                    The app will appear on your home screen with the HELL5TAR icon.
+                    The app will appear on your home screen with the DRKMRT icon.
                   </p>
                 </div>
               </div>
             ) : deferredPrompt ? (
               <div className="panel-3d rounded-lg p-6 sm:p-8">
                 <p className="text-muted-foreground font-mono mb-6">
-                  Install HELL5TAR for quick access, offline support, and a native app experience.
+                  Install DRKMRT for quick access, offline support, and a native app experience.
                 </p>
                 <Button
                   className="crt-button px-8 py-6 text-lg font-mono w-full sm:w-auto"

@@ -170,7 +170,7 @@ export default function Auth() {
           <div className="flex items-center gap-2 mb-6 pb-4 border-b border-primary/20">
             <Terminal className="w-5 h-5 text-primary" />
             <span className="text-xs text-muted-foreground font-mono truncate">
-              hell5tar@auth-gateway ~ 
+              drkmrt@auth-gateway ~ 
             </span>
             <span className="w-2 h-4 bg-primary animate-blink flex-shrink-0" />
           </div>

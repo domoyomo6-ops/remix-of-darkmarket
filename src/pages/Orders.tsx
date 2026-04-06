@@ -131,7 +131,7 @@ export default function Orders() {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 border border-primary/20 mb-4">
               <Terminal className="w-4 h-4 text-primary" />
               <span className="text-xs font-mono text-primary">
-                root@hell5tar:~/orders$ ls -la
+                root@drkmrt:~/orders$ ls -la
               </span>
               <span className="w-2 h-4 bg-primary animate-pulse" />
             </div>
