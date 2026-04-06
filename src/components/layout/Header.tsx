@@ -142,9 +142,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 glass-3d border-b border-primary/20">
       <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded border border-primary/40 flex items-center justify-center group-hover:border-primary/60 transition-all duration-300 raised group-hover:box-glow">
-            <Terminal className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          </div>
+          <img src="/favicon.png" alt="DRKMRT" className="w-8 h-8 sm:w-10 sm:h-10 rounded group-hover:scale-110 transition-transform duration-300" />
           <span className="font-mono font-bold text-sm sm:text-lg text-primary tracking-wider animate-logo-glow">
             DRKMRT://
           </span>
