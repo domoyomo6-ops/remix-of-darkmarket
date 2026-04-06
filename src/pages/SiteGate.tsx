@@ -351,10 +351,10 @@ const SiteGate = () => {
               </div>
 
               {/* CONTENT */}
-              <div className="relative z-20 p-6 space-y-4">
+              <div className="relative z-20 p-3 sm:p-6 space-y-4">
                 {/* ASCII Logo with secret click area */}
-                <div className="relative">
-                  <pre className="text-[9px] sm:text-[11px] leading-tight whitespace-pre" style={{ color: `rgba(${COLORS.main},0.95)`, textShadow: `0 0 1px rgba(${COLORS.main},1),0 0 2px rgba(${COLORS.main},0.8)` }}>
+                <div className="relative overflow-x-auto">
+                  <pre className="text-[6px] xs:text-[8px] sm:text-[11px] leading-tight whitespace-pre" style={{ color: `rgba(${COLORS.main},0.95)`, textShadow: `0 0 1px rgba(${COLORS.main},1),0 0 2px rgba(${COLORS.main},0.8)` }}>
                     {asciiLogo}
                   </pre>
                   {/* Hidden clickable area over the "5" and star area in DRKMRT */}
