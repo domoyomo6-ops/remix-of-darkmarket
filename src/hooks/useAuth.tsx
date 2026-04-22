@@ -36,31 +36,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    const handleSession = async (session: Session | null) => {
+    // CRITICAL: Set up auth listener FIRST, then check existing session.
+    // Do NOT use async/await directly inside onAuthStateChange — it can cause deadlocks.
+    // Defer any Supabase calls (like role check) with setTimeout(..., 0).
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
-
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await checkAdminRole(session.user.id);
+        // Defer to avoid deadlock inside the auth callback
+        setTimeout(() => {
+          if (isMounted) checkAdminRole(session.user.id);
+        }, 0);
       } else {
         setIsAdmin(false);
       }
-
       setLoading(false);
-    };
-
-    // Initial session
-    supabase.auth.getSession().then(({ data }) => {
-      handleSession(data.session);
     });
 
-    // Auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleSession(session);
+    // THEN check for existing session (restored from localStorage)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      }
+      setLoading(false);
     });
 
     return () => {
