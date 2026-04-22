@@ -27,7 +27,7 @@ export default function Auth() {
   const [inviteValid, setInviteValid] = useState<boolean | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -139,6 +139,32 @@ export default function Auth() {
       }
     } catch {
       toast.error('SYSTEM_ERROR: Unexpected failure');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      emailSchema.parse(normalizedEmail);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        setErrors((prev) => ({ ...prev, email: e.errors[0].message }));
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await resetPassword(normalizedEmail);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success('RECOVERY_LINK_SENT');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -276,6 +302,19 @@ export default function Auth() {
               )}
             </Button>
           </form>
+
+          {isLogin && (
+            <div className="mt-3 text-right">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+                className="text-xs text-primary hover:text-primary font-mono disabled:opacity-50"
+              >
+                [RESET PASSKEY]
+              </button>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <button
