@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, forwardRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,9 +37,10 @@ const Cart = lazy(() => import("./pages/Cart"));
 const Settings = lazy(() => import("./pages/Settings"));
 
 // Loading fallback component
-const RouteLoader = () => <div className="min-h-screen flex items-center justify-center bg-background">
+const RouteLoader = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>((props, ref) => <div ref={ref} {...props} className="min-h-screen flex items-center justify-center bg-background">
     <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-  </div>;
+  </div>);
+RouteLoader.displayName = "RouteLoader";
 const queryClient = new QueryClient();
 function AppRoutes() {
   const {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +27,7 @@ const SiteGate = () => {
   const [signUpErrors, setSignUpErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
   const timeRef = useRef<HTMLSpanElement>(null);
 
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -134,6 +135,39 @@ const SiteGate = () => {
     setIsLoading(false);
   };
 
+  const handleForgotPassword = async () => {
+    const emailResult = emailSchema.safeParse(email);
+
+    if (!emailResult.success) {
+      toast({
+        title: "INVALID EMAIL",
+        description: emailResult.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await resetPassword(email);
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "RESET FAILED",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "RECOVERY SENT",
+      description: "Check your email for the reset link.",
+    });
+  };
+
   const validateSignUpForm = (): boolean => {
     const errors: { email?: string; password?: string; fullName?: string } = {};
 
@@ -162,6 +196,22 @@ const SiteGate = () => {
     if (!validateSignUpForm()) return;
 
     setIsLoading(true);
+
+    const { data: inviteCheck } = await supabase.rpc("validate_invite_on_signup", {
+      invite_email: signUpEmail.trim().toLowerCase(),
+    });
+
+    const inviteResult = inviteCheck as { valid?: boolean } | null;
+
+    if (!inviteResult?.valid) {
+      toast({
+        title: "INVITE REQUIRED",
+        description: "Ask an admin for an invite before creating an account.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const { error } = await signUp(signUpEmail, signUpPassword, signUpFullName);
 
@@ -203,7 +253,7 @@ const SiteGate = () => {
     });
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-2 sm:p-4 font-mono overflow-hidden">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4 font-mono">
       {/* ORIGINAL DARK BACKGROUND */}
       <div 
         className="fixed inset-0 -z-30"
@@ -213,7 +263,7 @@ const SiteGate = () => {
       />
 
       {/* MAIN CRT MONITOR AREA */}
-      <div className="w-full max-w-xl relative z-10" style={{ perspective: "1000px" }}>
+      <div className="relative z-10 w-full max-w-xl" style={{ perspective: "1000px" }}>
         <div className="relative rounded-xl p-3 sm:p-4 steel-terminal-box"
           style={{
             background: `linear-gradient(145deg, #1a1a1e 0%, #0d0d0f 50%, #080809 100%)`,
@@ -354,7 +404,7 @@ const SiteGate = () => {
               <div className="relative z-20 p-3 sm:p-6 space-y-4">
                 {/* ASCII Logo with secret click area */}
                 <div className="relative overflow-x-auto">
-                  <pre className="text-[6px] xs:text-[8px] sm:text-[11px] leading-tight whitespace-pre" style={{ color: `rgba(${COLORS.main},0.95)`, textShadow: `0 0 1px rgba(${COLORS.main},1),0 0 2px rgba(${COLORS.main},0.8)` }}>
+                  <pre className="min-w-max text-[5px] leading-tight whitespace-pre xs:text-[7px] sm:text-[11px]" style={{ color: `rgba(${COLORS.main},0.95)`, textShadow: `0 0 1px rgba(${COLORS.main},1),0 0 2px rgba(${COLORS.main},0.8)` }}>
                     {asciiLogo}
                   </pre>
                   {/* Hidden clickable area over the "5" and star area in DRKMRT */}
@@ -422,6 +472,8 @@ const SiteGate = () => {
                         onChange={(e) => setEmail(e.target.value)} 
                         className="crt-input w-full" 
                         placeholder="user@drkmrt.net" 
+                        autoComplete="email"
+                        inputMode="email"
                         required 
                       />
                     </div>
@@ -435,6 +487,7 @@ const SiteGate = () => {
                         onChange={(e) => setPassword(e.target.value)} 
                         className="crt-input w-full" 
                         placeholder="••••••••" 
+                        autoComplete="current-password"
                         required 
                       />
                     </div>
@@ -453,6 +506,15 @@ const SiteGate = () => {
                       >
                         [ REQUEST ACCESS ]
                       </button>
+                      <Button 
+                        type="button"
+                        variant="ghost"
+                        onClick={handleForgotPassword}
+                        disabled={isLoading}
+                        className="w-full text-xs font-mono text-primary hover:bg-primary/10"
+                      >
+                        [ RESET PASSKEY ]
+                      </Button>
                     </div>
                   </form>
                 )}
@@ -470,6 +532,7 @@ const SiteGate = () => {
                         onChange={(e) => setSignUpFullName(e.target.value)} 
                         className="crt-input w-full" 
                         placeholder="Agent Smith"
+                        autoComplete="name"
                         required 
                       />
                       {signUpErrors.fullName && (
@@ -486,6 +549,8 @@ const SiteGate = () => {
                         onChange={(e) => setSignUpEmail(e.target.value)} 
                         className="crt-input w-full" 
                         placeholder="user@drkmrt.net"
+                        autoComplete="email"
+                        inputMode="email"
                         required 
                       />
                       {signUpErrors.email && (
@@ -502,6 +567,7 @@ const SiteGate = () => {
                         onChange={(e) => setSignUpPassword(e.target.value)} 
                         className="crt-input w-full" 
                         placeholder="••••••••"
+                        autoComplete="new-password"
                         required 
                       />
                       {signUpErrors.password && (
@@ -534,7 +600,7 @@ const SiteGate = () => {
       </div>
 
       {/* CRT Monitor Label */}
-      <div className="absolute bottom-2 left-4 text-[8px] uppercase tracking-[0.2em]" style={{ color: 'rgba(100,100,105,0.5)' }}>
+      <div className="absolute bottom-2 left-4 hidden text-[8px] uppercase tracking-[0.2em] sm:block" style={{ color: 'rgba(100,100,105,0.5)' }}>
         DK-CRT
       </div>
       <button
