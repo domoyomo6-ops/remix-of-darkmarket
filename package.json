@@ -69,6 +69,7 @@
     "three": "^0.160.1",
     "vaul": "^0.9.9",
     "vite-plugin-pwa": "^1.2.0",
+    "workbox-precaching": "^7.4.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
