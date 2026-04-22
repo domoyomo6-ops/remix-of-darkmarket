@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useRef,
   createContext,
   useContext,
   ReactNode,
@@ -33,41 +34,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const isRestoringSession = useRef(true);
+
+  const applySessionState = (nextSession: Session | null, isMounted: boolean) => {
+    if (!isMounted) return;
+
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+
+    if (nextSession?.user) {
+      setTimeout(() => {
+        if (isMounted) checkAdminRole(nextSession.user.id);
+      }, 0);
+      return;
+    }
+
+    setIsAdmin(false);
+  };
 
   useEffect(() => {
     let isMounted = true;
 
-    // CRITICAL: Set up auth listener FIRST, then check existing session.
-    // Do NOT use async/await directly inside onAuthStateChange — it can cause deadlocks.
-    // Defer any Supabase calls (like role check) with setTimeout(..., 0).
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
+      applySessionState(session, isMounted);
 
-      if (session?.user) {
-        // Defer to avoid deadlock inside the auth callback
-        setTimeout(() => {
-          if (isMounted) checkAdminRole(session.user.id);
-        }, 0);
-      } else {
-        setIsAdmin(false);
+      if (!isRestoringSession.current && isMounted) {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    // THEN check for existing session (restored from localStorage)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminRole(session.user.id);
-      }
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        applySessionState(session, isMounted);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+
+        isRestoringSession.current = false;
+        setLoading(false);
+      });
 
     return () => {
       isMounted = false;
