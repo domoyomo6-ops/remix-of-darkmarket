@@ -20,6 +20,7 @@ const Orders = lazy(() => import("./pages/Orders"));
 const Admin = lazy(() => import("./pages/admin"));
 const Install = lazy(() => import("./pages/Install"));
 const TopUpSuccess = lazy(() => import("./pages/TopUpSuccess"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Stock = lazy(() => import("./pages/Stock"));
 const Logz = lazy(() => import("./pages/Logz"));
@@ -92,6 +93,7 @@ function AppRoutes() {
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin-auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<SiteGate />} />
           </Routes>
         </Suspense>
@@ -113,6 +115,7 @@ function AppRoutes() {
           <Route path="/desktop" element={<Desktop />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin-auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/admin" element={<Admin />} />
