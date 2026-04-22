@@ -22,6 +22,7 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -97,9 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName: string
   ) => {
     const redirectUrl = `${window.location.origin}/`;
+    const normalizedEmail = email.trim().toLowerCase();
 
     const { error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
@@ -113,9 +115,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: normalizedEmail,
       password,
+    });
+
+    return { error };
+  };
+
+  const resetPassword = async (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/settings`,
     });
 
     return { error };
@@ -137,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signUp,
         signIn,
+        resetPassword,
         signOut,
       }}
     >
